@@ -652,10 +652,10 @@
         const modePrompt = promptMode === 'Formal'
             ? 'Ajuste o texto para um tom mais formal, profissional e claro.'
             : promptMode === 'Conciso'
-                ? 'Torne o texto mais conciso e direto, removendo TODAS as repetições desnecessárias de palavras, nomes e frases redundantes, mantendo o significado.'
+                ? 'Torne o texto mais conciso e direto, reduzindo repetições desnecessárias de palavras e frases, mantendo o significado.'
                 : promptMode === 'Criativo'
-                    ? 'Melhore o texto com maior fluidez, criatividade e expressividade, eliminando repetições e redundâncias.'
-                    : 'Aprimore a clareza, correção e fluidez do texto. REMOVA REPETIÇÕES: elimine nomes, palavras e frases que se repetem desnecessariamente. Se um nome aparece várias vezes no mesmo parágrafo, reduza as ocorrências substituindo algumas por pronomes (ele, ela, etc.) ou simplificando a construção, mantendo sempre a coerência.';
+                    ? 'Melhore o texto com maior fluidez, criatividade e expressividade, eliminando repetições óbvias.'
+                    : 'Aprimore a clareza, correção e fluidez do texto. Se um nome ou palavra se repete muitas vezes num parágrafo próximo, substitua apenas ALGUMAS ocorrências (não todas) por pronomes apropriados (ele, ela, isso, etc.), sempre mantendo a clareza e nunca removendo completamente o nome do contexto.';
         return `${basePrompt} ${modePrompt}`;
     }
 
