@@ -11,6 +11,7 @@
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
 // @connect      api.groq.com
+// @run-at       document-end
 // ==/UserScript==
 
 (function() {
@@ -37,6 +38,11 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
     let resultModal = null;
     let resultTextarea = null;
     let originalSelection = null;
+    let originalRange = null;
+
+    function isRangeValid(range) {
+        return range && range.startContainer && range.endContainer && document.contains(range.startContainer) && document.contains(range.endContainer);
+    }
 
     function createLoadingIndicator() {
         loadingIndicator = document.createElement('div');
@@ -75,8 +81,9 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         }
     }
 
-    function createResultModal(text, originalSelectedText) {
+    function createResultModal(text, originalSelectedText, selectionRange) {
         originalSelection = originalSelectedText;
+        originalRange = selectionRange;
 
         resultModal = document.createElement('div');
         resultModal.id = 'groq-enhancer-result-modal';
@@ -115,27 +122,29 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         resultTextarea = document.getElementById('groq-enhanced-text');
         resultTextarea.value = text;
 
-        document.getElementById('groq-copy-btn').addEventListener('click', () => {
+        document.getElementById('groq-copy-btn').addEventListener('click', async () => {
+            const textToCopy = resultTextarea.value;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    alert('Texto copiado para a área de transferência!');
+                    return;
+                } catch (err) {
+                    console.warn('Clipboard API falhou, usando fallback:', err);
+                }
+            }
             resultTextarea.select();
             document.execCommand('copy');
             alert('Texto copiado para a área de transferência!');
         });
 
         document.getElementById('groq-replace-btn').addEventListener('click', () => {
-            if (originalSelection) {
-                const newText = resultTextarea.value;
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    if (range.toString().trim() === originalSelection.trim()) {
-                        range.deleteContents();
-                        range.insertNode(document.createTextNode(newText));
-                    } else {
-                        const bodyText = document.body.innerHTML;
-                        const newBodyText = bodyText.replace(originalSelection, newText);
-                        document.body.innerHTML = newBodyText;
-                    }
-                }
+            const newText = resultTextarea.value;
+            if (isRangeValid(originalRange)) {
+                originalRange.deleteContents();
+                originalRange.insertNode(document.createTextNode(newText));
+            } else {
+                alert('Não foi possível substituir automaticamente o texto na página. Copie o texto aprimorado e cole manualmente.');
             }
             removeResultModal();
         });
@@ -153,7 +162,7 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
 
     // --- Groq API Interaction --- //
 
-    async function callGroqAPI(textToEnhance) {
+    async function callGroqAPI(textToEnhance, selectionRange) {
         if (!groqApiKey) {
             alert('Por favor, configure sua chave de API Groq nas configurações do Verba Prism.');
             openSettingsModal();
@@ -183,9 +192,21 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
                 removeLoadingIndicator();
                 try {
                     const data = JSON.parse(response.responseText);
+                    if (response.status < 200 || response.status >= 300) {
+                        const message = (data && data.error && data.error.message) ? data.error.message : response.statusText || 'Erro na requisição';
+                        alert(`Erro HTTP ${response.status}: ${message}`);
+                        console.error('Groq API HTTP error:', response.status, response.responseText);
+                        return;
+                    }
+
                     if (data.choices && data.choices.length > 0) {
-                        const enhancedText = data.choices[0].message.content;
-                        createResultModal(enhancedText, textToEnhance);
+                        const enhancedText = data.choices[0]?.message?.content || data.choices[0]?.text;
+                        if (enhancedText) {
+                            createResultModal(enhancedText, textToEnhance, selectionRange);
+                        } else {
+                            alert('A resposta da API Groq não contém texto aprimorado.');
+                            console.error('Groq API response missing content:', data);
+                        }
                     } else if (data.error) {
                         alert(`Erro da API Groq: ${data.error.message}`);
                         console.error('Groq API Error:', data.error);
@@ -334,15 +355,16 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
 
 
     if (!groqApiKey) {
-        console.log("Groq API Key não configurada. Abrindo configurações...");
-        openSettingsModal();
+        console.log("Groq API Key não configurada. Use o menu Tampermonkey para abrir as configurações.");
     }
     GM_registerMenuCommand("Configurações do Verba Prism", openSettingsModal);
 
     GM_registerMenuCommand("Melhorar seleção usando IA", () => {
-        const selectedText = window.getSelection().toString().trim();
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
+        const selectedRange = selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null;
         if (selectedText.length > 0) {
-            callGroqAPI(selectedText);
+            callGroqAPI(selectedText, selectedRange);
         } else {
             alert("Por favor, selecione um texto para melhorar.");
         }
