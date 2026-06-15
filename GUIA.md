@@ -30,6 +30,7 @@ Este arquivo lista os principais pontos de melhoria para o userscript `script.js
 
 - [ ] Tornar o script compatível com elementos `textarea`/`input` selecionados diretamente
 - [ ] Adicionar suporte para múltiplos idiomas (português, inglês)
+- [ ] Adicionar suporte para múltiplos provedores (openai, gemini)
 - [ ] Salvar configurações no `GM_setValue` com um esquema de versão para futuras atualizações
 - [ ] Adicionar testes manuais ou automatizados para fluxos principais (`selecionar`, `enviar`, `receber`, `substituir`)
 - [ ] Melhorar o nome das variáveis e comentários para facilitar manutenção
