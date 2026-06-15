@@ -17,10 +17,13 @@
 (function() {
     'use strict';
 
+    const SCRIPT_DEBUG_VERSION = '2026-06-15-01';
     const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
     const GROQ_MODELS_URL = 'https://api.groq.com/openai/v1/models';
     const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
     const MODAL_Z_INDEX = 100000;
+
+    console.log(`Verba Prism script.js carregado — versão de depuração ${SCRIPT_DEBUG_VERSION}`);
     const PROMPT_TEMPLATE = `Você é um corretor e aprimorador de textos.
 Sua função é revisar, corrigir e melhorar qualquer texto enviado pelo usuário, mantendo o estilo, o tom e a estrutura original.
 
