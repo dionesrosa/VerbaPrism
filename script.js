@@ -41,7 +41,12 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
     let backdrop = null;
     let originalSelectionData = null;
     let contextMenuOverlay = null;
+    let fieldActionButton = null;
+    let activeTextField = null;
+    let fieldHideTimeout = null;
     const CONTEXT_MENU_ID = 'groq-enhancer-context-menu';
+    const FIELD_ACTION_BUTTON_ID = 'groq-enhancer-field-action';
+    const TEXT_INPUT_TYPES = new Set(['text', 'search', 'email', 'url', 'tel', 'number']);
 
     function createElement(tag, attrs = {}, styles = {}, html = '') {
         const el = document.createElement(tag);
@@ -73,6 +78,120 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
             backdrop.remove();
             backdrop = null;
         }
+    }
+
+    function isTextField(element) {
+        if (!element || element.nodeType !== 1) {
+            return false;
+        }
+        const tag = element.tagName;
+        if (tag === 'TEXTAREA') {
+            return !element.readOnly && !element.disabled;
+        }
+        if (tag !== 'INPUT') {
+            return false;
+        }
+        return TEXT_INPUT_TYPES.has((element.type || 'text').toLowerCase()) && !element.readOnly && !element.disabled;
+    }
+
+    function createFieldActionButton() {
+        if (fieldActionButton) {
+            return;
+        }
+
+        fieldActionButton = createElement('button', { id: FIELD_ACTION_BUTTON_ID, type: 'button', title: 'Melhorar texto com Verba Prism' }, {
+            position: 'fixed',
+            display: 'none',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: '#0d6efd',
+            color: '#fff',
+            border: 'none',
+            cursor: 'pointer',
+            zIndex: MODAL_Z_INDEX + 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px',
+            fontWeight: '700',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.18)',
+            padding: '0',
+            pointerEvents: 'auto'
+        }, 'V');
+
+        fieldActionButton.addEventListener('click', handleFieldActionClick);
+        fieldActionButton.addEventListener('mousedown', event => event.stopPropagation());
+        fieldActionButton.addEventListener('mouseenter', () => clearTimeout(fieldHideTimeout));
+        fieldActionButton.addEventListener('mouseleave', scheduleHideFieldActionButton);
+        document.body.appendChild(fieldActionButton);
+    }
+
+    function updateFieldActionButtonPosition(element) {
+        if (!element || !fieldActionButton) {
+            return;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const x = Math.min(window.innerWidth - 42, rect.left + window.scrollX + rect.width - 38);
+        const y = Math.max(10, rect.top + window.scrollY + 6);
+
+        fieldActionButton.style.left = `${x}px`;
+        fieldActionButton.style.top = `${y}px`;
+    }
+
+    function showFieldActionButtonFor(element) {
+        if (!isTextField(element)) {
+            return;
+        }
+
+        createFieldActionButton();
+        clearTimeout(fieldHideTimeout);
+        activeTextField = element;
+        updateFieldActionButtonPosition(element);
+        fieldActionButton.style.display = 'flex';
+    }
+
+    function hideFieldActionButton() {
+        if (fieldActionButton) {
+            fieldActionButton.style.display = 'none';
+        }
+        activeTextField = null;
+        clearTimeout(fieldHideTimeout);
+    }
+
+    function scheduleHideFieldActionButton() {
+        clearTimeout(fieldHideTimeout);
+        fieldHideTimeout = setTimeout(() => {
+            if (fieldActionButton && !fieldActionButton.matches(':hover')) {
+                hideFieldActionButton();
+            }
+        }, 200);
+    }
+
+    function getFieldSelectionData(field) {
+        const value = field.value || '';
+        const start = typeof field.selectionStart === 'number' ? field.selectionStart : 0;
+        const end = typeof field.selectionEnd === 'number' ? field.selectionEnd : value.length;
+        const hasSelection = end > start;
+        return {
+            source: 'input',
+            element: field,
+            text: hasSelection ? value.slice(start, end) : value,
+            start: hasSelection ? start : 0,
+            end: hasSelection ? end : value.length
+        };
+    }
+
+    function handleFieldActionClick() {
+        if (!activeTextField) {
+            return;
+        }
+        const selectionData = getFieldSelectionData(activeTextField);
+        if (!selectionData.text.trim()) {
+            alert('Não há texto para melhorar neste campo.');
+            return;
+        }
+        callGroqAPI(selectionData.text.trim(), selectionData);
     }
 
     function removeCustomContextMenu() {
@@ -149,15 +268,55 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         }
     }, true);
 
+    document.addEventListener('mouseover', event => {
+        if (isTextField(event.target)) {
+            showFieldActionButtonFor(event.target);
+        }
+    }, true);
+
+    document.addEventListener('mouseout', event => {
+        if (isTextField(event.target)) {
+            scheduleHideFieldActionButton();
+        }
+    }, true);
+
+    document.addEventListener('focusin', event => {
+        if (isTextField(event.target)) {
+            showFieldActionButtonFor(event.target);
+        }
+    }, true);
+
+    document.addEventListener('focusout', event => {
+        if (isTextField(event.target)) {
+            scheduleHideFieldActionButton();
+        }
+    }, true);
+
     document.addEventListener('mousedown', event => {
         if (contextMenuOverlay && !event.target.closest(`#${CONTEXT_MENU_ID}`)) {
             removeCustomContextMenu();
+        }
+        if (fieldActionButton && event.target !== fieldActionButton && !event.target.closest(`#${FIELD_ACTION_BUTTON_ID}`)) {
+            scheduleHideFieldActionButton();
+        }
+    });
+
+    document.addEventListener('scroll', () => {
+        if (activeTextField && fieldActionButton && fieldActionButton.style.display !== 'none') {
+            updateFieldActionButtonPosition(activeTextField);
+        }
+    }, true);
+
+    window.addEventListener('resize', () => {
+        if (activeTextField && fieldActionButton && fieldActionButton.style.display !== 'none') {
+            updateFieldActionButtonPosition(activeTextField);
         }
     });
 
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             removeCustomContextMenu();
+            hideFieldActionButton();
         }
     });
 
