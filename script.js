@@ -86,9 +86,11 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         removeCustomContextMenu();
 
         contextMenuOverlay = createElement('div', { id: CONTEXT_MENU_ID }, {
-            position: 'absolute',
+            position: 'fixed',
             top: '0',
             left: '0',
+            width: '100vw',
+            height: '100vh',
             zIndex: MODAL_Z_INDEX + 5,
             pointerEvents: 'none'
         });
@@ -106,7 +108,8 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
             boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
             pointerEvents: 'auto',
             fontSize: '14px',
-            fontFamily: 'sans-serif'
+            fontFamily: 'sans-serif',
+            zIndex: MODAL_Z_INDEX + 6
         }, 'Melhorar seleção com Verba Prism');
 
         button.addEventListener('click', () => {
@@ -142,7 +145,7 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         } else {
             removeCustomContextMenu();
         }
-    });
+    }, true);
 
     document.addEventListener('mousedown', event => {
         if (contextMenuOverlay && !event.target.closest(`#${CONTEXT_MENU_ID}`)) {
