@@ -341,8 +341,13 @@
         });
         fieldActionButton.textContent = '✦';
 
+        fieldActionButton.addEventListener('mousedown', event => {
+            event.stopPropagation();
+            if (document.activeElement && /^(?:INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {
+                lastFocusedField = document.activeElement;
+            }
+        });
         fieldActionButton.addEventListener('click', handleFieldActionClick);
-        fieldActionButton.addEventListener('mousedown', event => event.stopPropagation());
         document.body.appendChild(fieldActionButton);
     }
 
@@ -834,18 +839,6 @@
             createCustomContextMenu(event.clientX, event.clientY, selectionData);
         } else {
             removeCustomContextMenu();
-        }
-    }, true);
-
-    document.addEventListener('focus', event => {
-        if (/^(?:INPUT|TEXTAREA)$/.test(event.target.tagName)) {
-            lastFocusedField = event.target;
-        }
-    }, true);
-
-    document.addEventListener('blur', event => {
-        if (event.target === lastFocusedField) {
-            lastFocusedField = null;
         }
     }, true);
 
