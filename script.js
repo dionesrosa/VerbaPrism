@@ -141,6 +141,8 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         const selectionData = getSelectionData();
         if (selectionData.text && selectionData.text.trim().length > 0) {
             event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             createCustomContextMenu(event.clientX, event.clientY, selectionData);
         } else {
             removeCustomContextMenu();
