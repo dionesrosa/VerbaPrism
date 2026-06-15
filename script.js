@@ -652,10 +652,10 @@
         const modePrompt = promptMode === 'Formal'
             ? 'Ajuste o texto para um tom mais formal, profissional e claro.'
             : promptMode === 'Conciso'
-                ? 'Torne o texto mais conciso e direto, mantendo o significado.'
+                ? 'Torne o texto mais conciso e direto, removendo repetições desnecessárias e mantendo o significado.'
                 : promptMode === 'Criativo'
-                    ? 'Melhore o texto com maior fluidez, criatividade e expressividade.'
-                    : 'Aprimore a clareza, correção e fluidez do texto.';
+                    ? 'Melhore o texto com maior fluidez, criatividade e expressividade, removendo repetições.'
+                    : 'Aprimore a clareza, correção e fluidez do texto. Remova repetições desnecessárias de palavras mantendo a coerência.';
         return `${basePrompt} ${modePrompt}`;
     }
 
