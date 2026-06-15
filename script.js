@@ -361,37 +361,92 @@
     }
 
     function handleFieldActionClick() {
-        const selectionData = getSelectionData();
-        if (!selectionData.text || !selectionData.text.trim()) {
-            showError('Selecione algum texto na página para melhorar.');
+        let textToSend = '';
+        let selectionData = null;
+
+        if (activeTextField && activeTextField.value) {
+            const value = activeTextField.value;
+            const start = activeTextField.selectionStart || 0;
+            const end = activeTextField.selectionEnd || value.length;
+            const selectedText = value.slice(start, end).trim();
+
+            if (selectedText) {
+                textToSend = selectedText;
+                selectionData = {
+                    source: 'input',
+                    element: activeTextField,
+                    text: selectedText,
+                    start,
+                    end
+                };
+            } else if (value.trim()) {
+                textToSend = value;
+                selectionData = {
+                    source: 'input',
+                    element: activeTextField,
+                    text: value,
+                    start: 0,
+                    end: value.length
+                };
+            }
+        }
+
+        if (!textToSend) {
+            const pageSelection = getSelectionData();
+            if (pageSelection.text && pageSelection.text.trim()) {
+                textToSend = pageSelection.text;
+                selectionData = pageSelection;
+            }
+        }
+
+        if (!textToSend || !textToSend.trim()) {
+            showError('Selecione algum texto na página ou clique dentro de um campo de texto.');
             return;
         }
-        callGroqAPI(selectionData.text.trim(), selectionData);
+
+        callGroqAPI(textToSend.trim(), selectionData);
     }
 
     function getSelectionData() {
         const activeEl = document.activeElement;
         if (activeEl && /^(?:INPUT|TEXTAREA)$/.test(activeEl.tagName) && typeof activeEl.selectionStart === 'number') {
-            const value = activeEl.value;
+            const value = activeEl.value || '';
             const start = activeEl.selectionStart;
             const end = activeEl.selectionEnd;
-            return {
-                source: 'input',
-                element: activeEl,
-                text: value.slice(start, end),
-                start,
-                end
-            };
+            const selectedText = value.slice(start, end).trim();
+            if (selectedText) {
+                return {
+                    source: 'input',
+                    element: activeEl,
+                    text: selectedText,
+                    start,
+                    end
+                };
+            }
+            if (value.trim()) {
+                return {
+                    source: 'input',
+                    element: activeEl,
+                    text: value,
+                    start: 0,
+                    end: value.length
+                };
+            }
         }
+
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) {
-            return { source: 'none', text: '' };
+        if (selection && selection.rangeCount > 0) {
+            const text = selection.toString().trim();
+            if (text) {
+                return {
+                    source: 'range',
+                    range: selection.getRangeAt(0).cloneRange(),
+                    text
+                };
+            }
         }
-        return {
-            source: 'range',
-            range: selection.getRangeAt(0).cloneRange(),
-            text: selection.toString()
-        };
+
+        return { source: 'none', text: '' };
     }
 
     function replaceSelectedText(data, newText) {
@@ -771,6 +826,20 @@
             createCustomContextMenu(event.clientX, event.clientY, selectionData);
         } else {
             removeCustomContextMenu();
+        }
+    }, true);
+
+    document.addEventListener('focusin', event => {
+        const field = findTextField(event.target);
+        if (field) {
+            activeTextField = field;
+        }
+    }, true);
+
+    document.addEventListener('focusout', event => {
+        const field = findTextField(event.target);
+        if (field === activeTextField) {
+            activeTextField = null;
         }
     }, true);
 
