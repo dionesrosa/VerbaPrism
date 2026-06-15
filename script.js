@@ -17,7 +17,7 @@
 (function() {
     'use strict';
 
-    const SCRIPT_DEBUG_VERSION = '2026-06-15-01';
+    const SCRIPT_DEBUG_VERSION = `debug-${Date.now()}`;
     const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
     const GROQ_MODELS_URL = 'https://api.groq.com/openai/v1/models';
     const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
