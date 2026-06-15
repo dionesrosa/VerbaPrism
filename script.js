@@ -142,8 +142,8 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         }
 
         const rect = element.getBoundingClientRect();
-        const x = Math.min(window.innerWidth - 42, rect.left + window.scrollX + rect.width - 38);
-        const y = Math.max(10, rect.top + window.scrollY + 6);
+        const x = Math.min(window.innerWidth - 46, rect.right + 6);
+        const y = Math.max(10, rect.top + 6);
 
         fieldActionButton.style.left = `${x}px`;
         fieldActionButton.style.top = `${y}px`;
