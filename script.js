@@ -364,17 +364,18 @@
         let textToSend = '';
         let selectionData = null;
 
-        if (activeTextField && activeTextField.value) {
-            const value = activeTextField.value;
-            const start = activeTextField.selectionStart || 0;
-            const end = activeTextField.selectionEnd || value.length;
+        const activeEl = document.activeElement;
+        if (activeEl && /^(?:INPUT|TEXTAREA)$/.test(activeEl.tagName) && typeof activeEl.selectionStart === 'number') {
+            const value = activeEl.value || '';
+            const start = activeEl.selectionStart;
+            const end = activeEl.selectionEnd;
             const selectedText = value.slice(start, end).trim();
 
             if (selectedText) {
                 textToSend = selectedText;
                 selectionData = {
                     source: 'input',
-                    element: activeTextField,
+                    element: activeEl,
                     text: selectedText,
                     start,
                     end
@@ -383,7 +384,7 @@
                 textToSend = value;
                 selectionData = {
                     source: 'input',
-                    element: activeTextField,
+                    element: activeEl,
                     text: value,
                     start: 0,
                     end: value.length
@@ -392,15 +393,22 @@
         }
 
         if (!textToSend) {
-            const pageSelection = getSelectionData();
-            if (pageSelection.text && pageSelection.text.trim()) {
-                textToSend = pageSelection.text;
-                selectionData = pageSelection;
+            const pageSelection = window.getSelection();
+            if (pageSelection && pageSelection.rangeCount > 0) {
+                const text = pageSelection.toString().trim();
+                if (text) {
+                    textToSend = text;
+                    selectionData = {
+                        source: 'range',
+                        range: pageSelection.getRangeAt(0).cloneRange(),
+                        text
+                    };
+                }
             }
         }
 
         if (!textToSend || !textToSend.trim()) {
-            showError('Selecione algum texto na página ou clique dentro de um campo de texto.');
+            showError('Coloque o cursor em um campo de texto ou selecione texto na página.');
             return;
         }
 
@@ -826,20 +834,6 @@
             createCustomContextMenu(event.clientX, event.clientY, selectionData);
         } else {
             removeCustomContextMenu();
-        }
-    }, true);
-
-    document.addEventListener('focusin', event => {
-        const field = findTextField(event.target);
-        if (field) {
-            activeTextField = field;
-        }
-    }, true);
-
-    document.addEventListener('focusout', event => {
-        const field = findTextField(event.target);
-        if (field === activeTextField) {
-            activeTextField = null;
         }
     }, true);
 
