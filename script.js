@@ -110,19 +110,20 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         fieldActionButton = createElement('button', { id: FIELD_ACTION_BUTTON_ID, type: 'button', title: 'Melhorar texto com Verba Prism' }, {
             position: 'fixed',
             display: 'none',
-            width: '34px',
-            height: '34px',
+            visibility: 'hidden',
+            width: '36px',
+            height: '36px',
             borderRadius: '50%',
             backgroundColor: '#0d6efd',
             color: '#fff',
             border: 'none',
             cursor: 'pointer',
-            zIndex: MODAL_Z_INDEX + 10,
+            zIndex: 2147483647,
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '16px',
             fontWeight: '700',
-            boxShadow: '0 10px 22px rgba(0,0,0,0.22)',
+            boxShadow: '0 10px 26px rgba(0,0,0,0.22)',
             padding: '0',
             pointerEvents: 'auto',
             transition: 'opacity 0.16s ease, transform 0.16s ease'
@@ -159,6 +160,7 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         activeTextField = field;
         updateFieldActionButtonPosition(field);
         fieldActionButton.style.display = 'flex';
+        fieldActionButton.style.visibility = 'visible';
         fieldActionButton.style.opacity = '1';
         fieldActionButton.style.transform = 'scale(1)';
     }
@@ -288,6 +290,20 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
     }, true);
 
     document.addEventListener('mouseout', event => {
+        const field = findTextField(event.target);
+        if (field) {
+            scheduleHideFieldActionButton();
+        }
+    }, true);
+
+    document.addEventListener('pointerover', event => {
+        const field = findTextField(event.target);
+        if (field) {
+            showFieldActionButtonFor(field);
+        }
+    }, true);
+
+    document.addEventListener('pointerout', event => {
         const field = findTextField(event.target);
         if (field) {
             scheduleHideFieldActionButton();
