@@ -8,7 +8,7 @@ Principais funcionalidades:
 • Aprimoramento de clareza, fluidez e legibilidade.
 • Preservação da estrutura e estilo original do texto.
 • Integração com múltiplos modelos da Groq.
-• Interface visual para configurações e exibição de resultados.
+• Interface visual dark, moderna e elegante, com nuances de rosa forte para elementos principais.
 • Funcionamento em qualquer site acessado pelo navegador.
 • Armazenamento local das configurações através do Tampermonkey.
 
