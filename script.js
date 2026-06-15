@@ -44,6 +44,7 @@
     let fieldHideTimeout = null;
     let originalSelectionData = null;
     let contextMenuOverlay = null;
+    let lastFocusedField = null;
 
     function createElement(tag, attrs = {}, styles = {}, html = '') {
         const el = document.createElement(tag);
@@ -364,18 +365,17 @@
         let textToSend = '';
         let selectionData = null;
 
-        const activeEl = document.activeElement;
-        if (activeEl && /^(?:INPUT|TEXTAREA)$/.test(activeEl.tagName) && typeof activeEl.selectionStart === 'number') {
-            const value = activeEl.value || '';
-            const start = activeEl.selectionStart;
-            const end = activeEl.selectionEnd;
+        if (lastFocusedField && /^(?:INPUT|TEXTAREA)$/.test(lastFocusedField.tagName)) {
+            const value = lastFocusedField.value || '';
+            const start = lastFocusedField.selectionStart || 0;
+            const end = lastFocusedField.selectionEnd || value.length;
             const selectedText = value.slice(start, end).trim();
 
             if (selectedText) {
                 textToSend = selectedText;
                 selectionData = {
                     source: 'input',
-                    element: activeEl,
+                    element: lastFocusedField,
                     text: selectedText,
                     start,
                     end
@@ -384,7 +384,7 @@
                 textToSend = value;
                 selectionData = {
                     source: 'input',
-                    element: activeEl,
+                    element: lastFocusedField,
                     text: value,
                     start: 0,
                     end: value.length
@@ -834,6 +834,18 @@
             createCustomContextMenu(event.clientX, event.clientY, selectionData);
         } else {
             removeCustomContextMenu();
+        }
+    }, true);
+
+    document.addEventListener('focus', event => {
+        if (/^(?:INPUT|TEXTAREA)$/.test(event.target.tagName)) {
+            lastFocusedField = event.target;
+        }
+    }, true);
+
+    document.addEventListener('blur', event => {
+        if (event.target === lastFocusedField) {
+            lastFocusedField = null;
         }
     }, true);
 
