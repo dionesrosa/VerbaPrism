@@ -94,6 +94,14 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         return TEXT_INPUT_TYPES.has((element.type || 'text').toLowerCase()) && !element.readOnly && !element.disabled;
     }
 
+    function findTextField(element) {
+        if (!(element instanceof Element)) {
+            return null;
+        }
+        const field = element.closest('input,textarea');
+        return isTextField(field) ? field : null;
+    }
+
     function createFieldActionButton() {
         if (fieldActionButton) {
             return;
@@ -102,8 +110,8 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         fieldActionButton = createElement('button', { id: FIELD_ACTION_BUTTON_ID, type: 'button', title: 'Melhorar texto com Verba Prism' }, {
             position: 'fixed',
             display: 'none',
-            width: '32px',
-            height: '32px',
+            width: '34px',
+            height: '34px',
             borderRadius: '50%',
             backgroundColor: '#0d6efd',
             color: '#fff',
@@ -112,12 +120,13 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
             zIndex: MODAL_Z_INDEX + 10,
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '14px',
+            fontSize: '16px',
             fontWeight: '700',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.18)',
+            boxShadow: '0 10px 22px rgba(0,0,0,0.22)',
             padding: '0',
-            pointerEvents: 'auto'
-        }, 'V');
+            pointerEvents: 'auto',
+            transition: 'opacity 0.16s ease, transform 0.16s ease'
+        }, '✎');
 
         fieldActionButton.addEventListener('click', handleFieldActionClick);
         fieldActionButton.addEventListener('mousedown', event => event.stopPropagation());
@@ -140,15 +149,18 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
     }
 
     function showFieldActionButtonFor(element) {
-        if (!isTextField(element)) {
+        const field = findTextField(element);
+        if (!field) {
             return;
         }
 
         createFieldActionButton();
         clearTimeout(fieldHideTimeout);
-        activeTextField = element;
-        updateFieldActionButtonPosition(element);
+        activeTextField = field;
+        updateFieldActionButtonPosition(field);
         fieldActionButton.style.display = 'flex';
+        fieldActionButton.style.opacity = '1';
+        fieldActionButton.style.transform = 'scale(1)';
     }
 
     function hideFieldActionButton() {
@@ -269,25 +281,29 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
     }, true);
 
     document.addEventListener('mouseover', event => {
-        if (isTextField(event.target)) {
-            showFieldActionButtonFor(event.target);
+        const field = findTextField(event.target);
+        if (field) {
+            showFieldActionButtonFor(field);
         }
     }, true);
 
     document.addEventListener('mouseout', event => {
-        if (isTextField(event.target)) {
+        const field = findTextField(event.target);
+        if (field) {
             scheduleHideFieldActionButton();
         }
     }, true);
 
     document.addEventListener('focusin', event => {
-        if (isTextField(event.target)) {
-            showFieldActionButtonFor(event.target);
+        const field = findTextField(event.target);
+        if (field) {
+            showFieldActionButtonFor(field);
         }
     }, true);
 
     document.addEventListener('focusout', event => {
-        if (isTextField(event.target)) {
+        const field = findTextField(event.target);
+        if (field) {
             scheduleHideFieldActionButton();
         }
     }, true);
