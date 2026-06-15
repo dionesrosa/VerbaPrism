@@ -194,10 +194,10 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
     function scheduleHideFieldActionButton() {
         clearTimeout(fieldHideTimeout);
         fieldHideTimeout = setTimeout(() => {
-            if (fieldActionButton && !fieldActionButton.matches(':hover')) {
+            if (fieldActionButton && !fieldActionButton.matches(':hover') && document.activeElement !== activeTextField) {
                 hideFieldActionButton();
             }
-        }, 200);
+        }, 240);
     }
 
     function getFieldSelectionData(field) {
@@ -309,7 +309,7 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
 
     document.addEventListener('mouseout', event => {
         const field = findTextField(event.target);
-        if (field) {
+        if (field && document.activeElement !== field) {
             scheduleHideFieldActionButton();
         }
     }, true);
@@ -323,7 +323,7 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
 
     document.addEventListener('pointerout', event => {
         const field = findTextField(event.target);
-        if (field) {
+        if (field && document.activeElement !== field) {
             scheduleHideFieldActionButton();
         }
     }, true);
