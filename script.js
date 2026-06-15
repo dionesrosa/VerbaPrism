@@ -648,14 +648,14 @@
     }
 
     function buildPrompt() {
-        const basePrompt = `Você é um corretor e aprimorador de textos em português. Sua função é revisar, corrigir e melhorar apenas o texto enviado. Priorize a correção de erros de ortografia, digitação e gramática, preservando a intenção, o significado e o tom original. Não reinterprete o contexto do texto; corrija o texto mantendo o mesmo sentido básico. IMPORTANTE: Preserve toda a formatação markdown (*, **, _, __, ~, etc.) e não remova ou altere nenhuma marcação. Retorne apenas o texto corrigido, sem explicações, comentários, exemplos ou instruções.`;
+        const basePrompt = `Você é um corretor e aprimorador de textos em português. Sua função é revisar, corrigir e melhorar apenas o texto enviado. Priorize a correção de erros de ortografia, digitação e gramática, preservando a intenção, o significado e o tom original. Não reinterprete o contexto do texto; corrija o texto mantendo o mesmo sentido básico. IMPORTANTE: Preserve toda a formatação markdown (*, **, _, __, ~, etc.) e não remova ou altere nenhuma marcação. Retorne apenas o texto corrigido, sem explicações, comentários, exemplos ou instruções. CRÍTICO: Nunca remova ou substitua nomes próprios (personagens, lugares, etc.), mesmo se repetidos - eles são essenciais à narrativa.`;
         const modePrompt = promptMode === 'Formal'
             ? 'Ajuste o texto para um tom mais formal, profissional e claro.'
             : promptMode === 'Conciso'
-                ? 'Torne o texto mais conciso e direto, reduzindo repetições desnecessárias de palavras e frases, mantendo o significado.'
+                ? 'Torne o texto mais conciso e direto, reduzindo repetições desnecessárias de conectivos e expressões, mas mantendo nomes próprios intactos.'
                 : promptMode === 'Criativo'
-                    ? 'Melhore o texto com maior fluidez, criatividade e expressividade, eliminando repetições óbvias.'
-                    : 'Aprimore a clareza, correção e fluidez do texto. Se um nome ou palavra se repete muitas vezes num parágrafo próximo, substitua apenas ALGUMAS ocorrências (não todas) por pronomes apropriados (ele, ela, isso, etc.), sempre mantendo a clareza e nunca removendo completamente o nome do contexto.';
+                    ? 'Melhore o texto com maior fluidez, criatividade e expressividade, preservando a repetição de nomes como efeito narrativo.'
+                    : 'Aprimore a clareza, correção e fluidez do texto. Remova apenas repetições óbvias de conectivos (mas, porém, e, etc.) e expressões redundantes, NUNCA removendo ou alterando nomes próprios.';
         return `${basePrompt} ${modePrompt}`;
     }
 
