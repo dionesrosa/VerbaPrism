@@ -40,6 +40,8 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
     let settingsModal = null;
     let backdrop = null;
     let originalSelectionData = null;
+    let contextMenuOverlay = null;
+    const CONTEXT_MENU_ID = 'groq-enhancer-context-menu';
 
     function createElement(tag, attrs = {}, styles = {}, html = '') {
         const el = document.createElement(tag);
@@ -72,6 +74,87 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
             backdrop = null;
         }
     }
+
+    function removeCustomContextMenu() {
+        if (contextMenuOverlay) {
+            contextMenuOverlay.remove();
+            contextMenuOverlay = null;
+        }
+    }
+
+    function createCustomContextMenu(x, y, selectionData) {
+        removeCustomContextMenu();
+
+        contextMenuOverlay = createElement('div', { id: CONTEXT_MENU_ID }, {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            zIndex: MODAL_Z_INDEX + 5,
+            pointerEvents: 'none'
+        });
+
+        const button = createElement('button', { id: 'groq-context-action' }, {
+            position: 'fixed',
+            top: `${y}px`,
+            left: `${x}px`,
+            backgroundColor: '#0d6efd',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+            pointerEvents: 'auto',
+            fontSize: '14px',
+            fontFamily: 'sans-serif'
+        }, 'Melhorar seleção com Verba Prism');
+
+        button.addEventListener('click', () => {
+            callGroqAPI(selectionData.text.trim(), selectionData);
+            removeCustomContextMenu();
+        });
+
+        contextMenuOverlay.appendChild(button);
+        normalizeContextMenuPosition(x, y, button);
+        document.body.appendChild(contextMenuOverlay);
+    }
+
+    function normalizeContextMenuPosition(x, y, element) {
+        const { innerWidth, innerHeight } = window;
+        const rect = element.getBoundingClientRect();
+        let left = x;
+        let top = y;
+        if (left + rect.width > innerWidth - 10) {
+            left = innerWidth - rect.width - 10;
+        }
+        if (top + rect.height > innerHeight - 10) {
+            top = innerHeight - rect.height - 10;
+        }
+        element.style.left = `${Math.max(10, left)}px`;
+        element.style.top = `${Math.max(10, top)}px`;
+    }
+
+    document.addEventListener('contextmenu', event => {
+        const selectionData = getSelectionData();
+        if (selectionData.text && selectionData.text.trim().length > 0) {
+            event.preventDefault();
+            createCustomContextMenu(event.clientX, event.clientY, selectionData);
+        } else {
+            removeCustomContextMenu();
+        }
+    });
+
+    document.addEventListener('mousedown', event => {
+        if (contextMenuOverlay && !event.target.closest(`#${CONTEXT_MENU_ID}`)) {
+            removeCustomContextMenu();
+        }
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            removeCustomContextMenu();
+        }
+    });
 
     function createLoadingIndicator() {
         if (loadingIndicator) {
