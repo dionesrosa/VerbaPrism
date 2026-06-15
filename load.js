@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Verba Prism
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2.0
 // @description  Aprimora o texto selecionado usando a API Groq (IA).
 // @author       Diones Souza
 // @icon         https://cdn-icons-png.magnific.com/64/9708/9708616.png
