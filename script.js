@@ -648,7 +648,7 @@
     }
 
     function buildPrompt() {
-        const basePrompt = `Você é um corretor e aprimorador de textos em português. Sua função é revisar, corrigir e melhorar apenas o texto enviado. Priorize a correção de erros de ortografia, digitação e gramática, preservando a intenção, o significado e o tom original. Não reinterprete o contexto do texto; corrija o texto mantendo o mesmo sentido básico. Retorne apenas o texto corrigido, sem explicações, comentários, exemplos ou instruções.`;
+        const basePrompt = `Você é um corretor e aprimorador de textos em português. Sua função é revisar, corrigir e melhorar apenas o texto enviado. Priorize a correção de erros de ortografia, digitação e gramática, preservando a intenção, o significado e o tom original. Não reinterprete o contexto do texto; corrija o texto mantendo o mesmo sentido básico. IMPORTANTE: Preserve toda a formatação markdown (*, **, _, __, ~, etc.) e não remova ou altere nenhuma marcação. Retorne apenas o texto corrigido, sem explicações, comentários, exemplos ou instruções.`;
         const modePrompt = promptMode === 'Formal'
             ? 'Ajuste o texto para um tom mais formal, profissional e claro.'
             : promptMode === 'Conciso'
