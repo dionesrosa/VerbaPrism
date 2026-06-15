@@ -18,10 +18,16 @@
 (function() {
     'use strict';
 
+    if (window.top !== window.self) {
+        console.log('Verba Prism script skipped inside iframe.');
+        return;
+    }
+
     const SCRIPT_DEBUG_VERSION = `debug-${Date.now()}`;
     const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
     const GROQ_MODELS_URL = 'https://api.groq.com/openai/v1/models';
     const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+    const ACCENT_COLOR = '#ED0053';
     const MODAL_Z_INDEX = 100000;
 
     let groqApiKey = GM_getValue('groqApiKey', '');
@@ -62,22 +68,6 @@
                 backdrop-filter: blur(8px);
                 z-index: ${MODAL_Z_INDEX - 1};
             }
-            .groq-enhancer-modal {
-                position: fixed;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                width: min(92vw, 720px);
-                max-height: 86vh;
-                border-radius: 22px;
-                background: #111827;
-                border: 1px solid rgba(255, 77, 145, 0.22);
-                box-shadow: 0 28px 80px rgba(0,0,0,0.42);
-                color: #f8fafc;
-                font-family: Inter, system-ui, sans-serif;
-                z-index: ${MODAL_Z_INDEX};
-                overflow: hidden;
-            }
             .groq-enhancer-modal header {
                 padding: 22px 24px 16px;
                 border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -94,10 +84,29 @@
                 color: #cbd5e1;
                 line-height: 1.5;
             }
+            .groq-enhancer-modal {
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: min(92vw, 720px);
+                max-height: 92vh;
+                border-radius: 22px;
+                background: #111827;
+                border: 1px solid rgba(237, 0, 83, 0.22);
+                box-shadow: 0 28px 80px rgba(0,0,0,0.42);
+                color: #f8fafc;
+                font-family: Inter, system-ui, sans-serif;
+                z-index: ${MODAL_Z_INDEX};
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+            }
             .groq-enhancer-modal .groq-body {
                 padding: 20px 24px 22px;
                 display: grid;
                 gap: 16px;
+                overflow: auto;
             }
             .groq-enhancer-modal .groq-footer {
                 padding: 16px 24px 20px;
@@ -122,9 +131,9 @@
                 transform: translateY(-1px);
             }
             .groq-enhancer-primary {
-                background: linear-gradient(135deg, #ff4d91 0%, #db2777 100%);
+                background: linear-gradient(135deg, ${ACCENT_COLOR} 0%, #bf0041 100%);
                 color: #fff;
-                box-shadow: 0 18px 40px rgba(219, 39, 119, 0.22);
+                box-shadow: 0 18px 40px rgba(237, 0, 83, 0.28);
             }
             .groq-enhancer-secondary {
                 background: rgba(255,255,255,0.08);
@@ -147,11 +156,16 @@
                 font-size: 0.96rem;
                 outline: none;
             }
+            .groq-enhancer-textarea {
+                min-height: 220px;
+                max-height: calc(72vh - 160px);
+                resize: vertical;
+            }
             .groq-enhancer-textarea:focus,
             .groq-enhancer-input:focus,
             .groq-enhancer-select:focus {
-                border-color: rgba(255,77,145,0.7);
-                box-shadow: 0 0 0 4px rgba(255,77,145,0.12);
+                border-color: rgba(237,0,83,0.7);
+                box-shadow: 0 0 0 4px rgba(237,0,83,0.14);
             }
             .groq-enhancer-label {
                 display: block;
@@ -206,28 +220,29 @@
             @keyframes groq-toast-enter { from { transform: translateY(10px); opacity:0; } to { transform: translateY(0); opacity:1; }}
             .groq-enhancer-action-button {
                 position: fixed;
+                width: 42px;
+                height: 42px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 8px;
-                min-width: 120px;
-                height: 36px;
-                padding: 0 14px;
+                border-radius: 50%;
+                background: ${ACCENT_COLOR};
+                color: #fff;
+                font-size: 1.1rem;
+                border: 1px solid rgba(255,255,255,0.15);
                 z-index: 2147483647;
                 opacity: 0;
                 transform: translateY(8px) scale(0.96);
                 visibility: hidden;
                 transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
                 backdrop-filter: blur(10px);
+                box-shadow: 0 16px 38px rgba(237, 0, 83, 0.25);
+                padding: 0;
             }
             .groq-enhancer-action-button.visible {
                 opacity: 1;
                 transform: translateY(0) scale(1);
                 visibility: visible;
-            }
-            .groq-enhancer-action-button::before {
-                content: 'Prism';
-                font-family: Inter, system-ui, sans-serif;
             }
         `;
 
@@ -304,29 +319,26 @@
         if (fieldActionButton) {
             return;
         }
-        fieldActionButton = createElement('button', { id: 'groq-enhancer-field-action', type: 'button', title: 'Abrir Verba Prism' }, {
+        fieldActionButton = createElement('button', { id: 'groq-enhancer-field-action', type: 'button', title: 'Melhorar texto com Verba Prism' }, {
             position: 'fixed',
-            display: 'flex',
-            visibility: 'hidden',
-            opacity: '0',
-            minWidth: '120px',
-            height: '36px',
-            borderRadius: '999px',
-            background: 'rgba(255, 77, 145, 0.96)',
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            background: ACCENT_COLOR,
             color: '#fff',
-            border: '1px solid rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.15)',
             cursor: 'pointer',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '0.95rem',
+            fontSize: '1.1rem',
             fontWeight: '700',
-            letterSpacing: '0.02em',
-            boxShadow: '0 18px 40px rgba(219, 39, 119, 0.22)',
-            padding: '0 16px',
+            boxShadow: '0 16px 38px rgba(237, 0, 83, 0.25)',
+            padding: '0',
             pointerEvents: 'auto',
             zIndex: 2147483647,
             transition: 'opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease'
         });
+        fieldActionButton.textContent = '✦';
 
         fieldActionButton.addEventListener('click', handleFieldActionClick);
         fieldActionButton.addEventListener('mousedown', event => event.stopPropagation());
@@ -482,7 +494,7 @@
         });
         loadingOverlay.innerHTML = `
             <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;border-radius:20px;background:rgba(15,23,42,0.96);border:1px solid rgba(255,255,255,0.1);box-shadow:0 28px 80px rgba(0,0,0,0.28);">
-                <div style="width:34px;height:34px;border:4px solid rgba(255,255,255,0.18);border-top-color:#ff4d91;border-radius:50%;animation:groq-spin 1s linear infinite;"></div>
+                <div style="width:34px;height:34px;border:4px solid rgba(255,255,255,0.18);border-top-color:${ACCENT_COLOR};border-radius:50%;animation:groq-spin 1s linear infinite;"></div>
                 <div style="font-size:0.98rem;line-height:1.4;">Aprimorando texto com IA...</div>
             </div>
         `;
@@ -633,7 +645,7 @@
     }
 
     function buildPrompt() {
-        const basePrompt = `Você é um corretor e aprimorador de textos. Sua função é revisar, corrigir e melhorar o texto enviado, mantendo o estilo, tom e estrutura original.`;
+        const basePrompt = `Você é um corretor e aprimorador de textos em português. Sua função é revisar, corrigir e melhorar apenas o texto enviado. Priorize a correção de erros de ortografia, digitação e gramática, preservando a intenção, o significado e o tom original. Não reinterprete o contexto do texto; corrija o texto mantendo o mesmo sentido básico. Retorne apenas o texto corrigido, sem explicações, comentários, exemplos ou instruções.`;
         const modePrompt = promptMode === 'Formal'
             ? 'Ajuste o texto para um tom mais formal, profissional e claro.'
             : promptMode === 'Conciso'

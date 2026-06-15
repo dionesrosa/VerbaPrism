@@ -18,6 +18,11 @@
 (function() {
     'use strict';
 
+    if (window.top !== window.self) {
+        console.log('Verba Prism local loader skipped inside iframe.');
+        return;
+    }
+
     const localScriptUrl = 'http://127.0.0.1:5500/script.js';
     const fetchUrl = `${localScriptUrl}?t=${Date.now()}`;
 
@@ -32,16 +37,13 @@
                         console.log(`Verba Prism carregado via load.js (${fetchUrl})`);
                     } catch (error) {
                         console.error('Erro ao executar script Verba Prism:', error);
-                        alert('Erro ao carregar o Verba Prism local. Veja o console para detalhes.');
                     }
                 } else {
                     console.error('Falha ao buscar o script local:', response.status, response.statusText);
-                    alert('Não foi possível carregar o Verba Prism local. Verifique se o servidor está ativo.');
                 }
             },
             onerror(error) {
                 console.error('Erro de requisição ao carregar Verba Prism local:', error);
-                alert('Erro ao carregar o Verba Prism local. Verifique a conexão com o servidor local.');
             }
         });
     }
