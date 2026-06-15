@@ -220,6 +220,8 @@
             @keyframes groq-toast-enter { from { transform: translateY(10px); opacity:0; } to { transform: translateY(0); opacity:1; }}
             .groq-enhancer-action-button {
                 position: fixed;
+                right: 18px;
+                bottom: 18px;
                 width: 42px;
                 height: 42px;
                 display: flex;
@@ -230,19 +232,15 @@
                 color: #fff;
                 font-size: 1.1rem;
                 border: 1px solid rgba(255,255,255,0.15);
-                z-index: 2147483647;
-                opacity: 0;
-                transform: translateY(8px) scale(0.96);
-                visibility: hidden;
-                transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
-                backdrop-filter: blur(10px);
-                box-shadow: 0 16px 38px rgba(237, 0, 83, 0.25);
-                padding: 0;
-            }
-            .groq-enhancer-action-button.visible {
+                z-index: ${MODAL_Z_INDEX - 2};
                 opacity: 1;
                 transform: translateY(0) scale(1);
                 visibility: visible;
+                transition: box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 16px 38px rgba(237, 0, 83, 0.25);
+                padding: 0;
+                cursor: pointer;
             }
         `;
 
@@ -321,6 +319,8 @@
         }
         fieldActionButton = createElement('button', { id: 'groq-enhancer-field-action', type: 'button', title: 'Melhorar texto com Verba Prism' }, {
             position: 'fixed',
+            right: '18px',
+            bottom: '18px',
             width: '42px',
             height: '42px',
             borderRadius: '50%',
@@ -335,72 +335,16 @@
             boxShadow: '0 16px 38px rgba(237, 0, 83, 0.25)',
             padding: '0',
             pointerEvents: 'auto',
-            zIndex: 2147483647,
-            transition: 'opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease'
+            zIndex: MODAL_Z_INDEX - 2,
+            transition: 'box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease'
         });
         fieldActionButton.textContent = '✦';
 
         fieldActionButton.addEventListener('click', handleFieldActionClick);
         fieldActionButton.addEventListener('mousedown', event => event.stopPropagation());
-        fieldActionButton.addEventListener('mouseenter', () => clearTimeout(fieldHideTimeout));
-        fieldActionButton.addEventListener('mouseleave', scheduleHideFieldActionButton);
         document.body.appendChild(fieldActionButton);
     }
 
-    function updateFieldActionButtonPosition(element) {
-        if (!element || !fieldActionButton) {
-            return;
-        }
-        const rect = element.getBoundingClientRect();
-        const buttonRect = fieldActionButton.getBoundingClientRect();
-        const x = Math.min(window.innerWidth - buttonRect.width - 10, Math.max(10, rect.left));
-        let y = rect.bottom + 10;
-        if (y + buttonRect.height > window.innerHeight - 10) {
-            y = rect.top - buttonRect.height - 10;
-        }
-        fieldActionButton.style.left = `${x}px`;
-        fieldActionButton.style.top = `${Math.max(10, y)}px`;
-    }
-
-    function showFieldActionButtonFor(element) {
-        const field = findTextField(element);
-        if (!field) {
-            return;
-        }
-        createFieldActionButton();
-        clearTimeout(fieldHideTimeout);
-        activeTextField = field;
-        fieldActionButton.style.display = 'flex';
-        fieldActionButton.style.visibility = 'hidden';
-        fieldActionButton.style.opacity = '0';
-        fieldActionButton.style.transform = 'translateY(6px) scale(0.96)';
-        updateFieldActionButtonPosition(field);
-        requestAnimationFrame(() => {
-            fieldActionButton.classList.add('visible');
-            fieldActionButton.style.visibility = 'visible';
-            fieldActionButton.style.opacity = '1';
-            fieldActionButton.style.transform = 'translateY(0) scale(1)';
-        });
-    }
-
-    function hideFieldActionButton() {
-        if (!fieldActionButton) {
-            return;
-        }
-        fieldActionButton.style.display = 'none';
-        fieldActionButton.classList.remove('visible');
-        activeTextField = null;
-        clearTimeout(fieldHideTimeout);
-    }
-
-    function scheduleHideFieldActionButton() {
-        clearTimeout(fieldHideTimeout);
-        fieldHideTimeout = setTimeout(() => {
-            if (fieldActionButton && !fieldActionButton.matches(':hover') && document.activeElement !== activeTextField) {
-                hideFieldActionButton();
-            }
-        }, 260);
-    }
 
     function getFieldSelectionData(field) {
         const value = field.value || '';
@@ -417,12 +361,9 @@
     }
 
     function handleFieldActionClick() {
-        if (!activeTextField) {
-            return;
-        }
-        const selectionData = getFieldSelectionData(activeTextField);
-        if (!selectionData.text.trim()) {
-            showError('Selecione ou digite algum texto para melhorar.');
+        const selectionData = getSelectionData();
+        if (!selectionData.text || !selectionData.text.trim()) {
+            showError('Selecione algum texto na página para melhorar.');
             return;
         }
         callGroqAPI(selectionData.text.trim(), selectionData);
@@ -833,73 +774,15 @@
         }
     }, true);
 
-    document.addEventListener('mouseover', event => {
-        const field = findTextField(event.target);
-        if (field) {
-            showFieldActionButtonFor(field);
-        }
-    }, true);
-
-    document.addEventListener('mouseout', event => {
-        const field = findTextField(event.target);
-        if (field && document.activeElement !== field) {
-            scheduleHideFieldActionButton();
-        }
-    }, true);
-
-    document.addEventListener('pointerover', event => {
-        const field = findTextField(event.target);
-        if (field) {
-            showFieldActionButtonFor(field);
-        }
-    }, true);
-
-    document.addEventListener('pointerout', event => {
-        const field = findTextField(event.target);
-        if (field && document.activeElement !== field) {
-            scheduleHideFieldActionButton();
-        }
-    }, true);
-
-    document.addEventListener('focusin', event => {
-        const field = findTextField(event.target);
-        if (field) {
-            showFieldActionButtonFor(field);
-        }
-    }, true);
-
-    document.addEventListener('focusout', event => {
-        const field = findTextField(event.target);
-        if (field) {
-            scheduleHideFieldActionButton();
-        }
-    }, true);
-
     document.addEventListener('mousedown', event => {
         if (contextMenuOverlay && !event.target.closest('#groq-enhancer-context-menu-overlay')) {
             removeCustomContextMenu();
-        }
-        if (fieldActionButton && event.target !== fieldActionButton && !event.target.closest('#groq-enhancer-field-action')) {
-            scheduleHideFieldActionButton();
-        }
-    });
-
-    document.addEventListener('scroll', () => {
-        if (activeTextField && fieldActionButton && fieldActionButton.style.display !== 'none') {
-            updateFieldActionButtonPosition(activeTextField);
-        }
-    }, true);
-
-    window.addEventListener('resize', () => {
-        if (activeTextField && fieldActionButton && fieldActionButton.style.display !== 'none') {
-            updateFieldActionButtonPosition(activeTextField);
         }
     });
 
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             removeCustomContextMenu();
-            hideFieldActionButton();
             if (resultModal) {
                 removeResultModal();
             }
