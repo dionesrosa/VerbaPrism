@@ -114,23 +114,26 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
             position: 'fixed',
             display: 'none',
             visibility: 'hidden',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            backgroundColor: '#0d6efd',
+            minWidth: '110px',
+            height: '32px',
+            borderRadius: '18px',
+            backgroundColor: 'rgba(13, 110, 253, 0.92)',
             color: '#fff',
             border: 'none',
             cursor: 'pointer',
             zIndex: 2147483647,
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '16px',
-            fontWeight: '700',
-            boxShadow: '0 10px 26px rgba(0,0,0,0.22)',
-            padding: '0',
+            fontSize: '13px',
+            fontWeight: '600',
+            letterSpacing: '0.01em',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.18)',
+            padding: '0 14px',
             pointerEvents: 'auto',
-            transition: 'opacity 0.16s ease, transform 0.16s ease'
-        }, '✎');
+            opacity: '0',
+            transform: 'translateY(4px) scale(0.96)',
+            transition: 'opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease'
+        }, 'Verba Prism');
 
         fieldActionButton.addEventListener('click', handleFieldActionClick);
         fieldActionButton.addEventListener('mousedown', event => event.stopPropagation());
@@ -145,11 +148,20 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         }
 
         const rect = element.getBoundingClientRect();
-        const x = Math.min(window.innerWidth - 46, rect.right + 6);
-        const y = Math.max(10, rect.top + 6);
+        const buttonRect = fieldActionButton.getBoundingClientRect();
+        const buttonWidth = buttonRect.width || 120;
+        const buttonHeight = buttonRect.height || 32;
+        const preferredX = rect.left;
+        const preferredY = rect.bottom + 8;
+
+        const x = Math.min(window.innerWidth - buttonWidth - 10, Math.max(10, preferredX));
+        let y = preferredY;
+        if (y + buttonHeight > window.innerHeight - 10) {
+            y = rect.top - buttonHeight - 8;
+        }
 
         fieldActionButton.style.left = `${x}px`;
-        fieldActionButton.style.top = `${y}px`;
+        fieldActionButton.style.top = `${Math.max(10, y)}px`;
     }
 
     function showFieldActionButtonFor(element) {
@@ -161,11 +173,14 @@ Retorne apenas o texto corrigido e aprimorado, sem explicações adicionais.`;
         createFieldActionButton();
         clearTimeout(fieldHideTimeout);
         activeTextField = field;
-        updateFieldActionButtonPosition(field);
         fieldActionButton.style.display = 'flex';
+        fieldActionButton.style.visibility = 'hidden';
+        fieldActionButton.style.opacity = '0';
+        fieldActionButton.style.transform = 'translateY(4px) scale(0.96)';
+        updateFieldActionButtonPosition(field);
         fieldActionButton.style.visibility = 'visible';
         fieldActionButton.style.opacity = '1';
-        fieldActionButton.style.transform = 'scale(1)';
+        fieldActionButton.style.transform = 'translateY(0) scale(1)';
     }
 
     function hideFieldActionButton() {
