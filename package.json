@@ -1,0 +1,16 @@
+{
+  "name": "verbaprism",
+  "version": "1.0.0",
+  "description": "Verba Prism é um userscript para Tampermonkey que utiliza a API da Groq para revisar, corrigir e aprimorar textos selecionados em qualquer página da web.",
+  "main": "load.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
