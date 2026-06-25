@@ -205,7 +205,8 @@ Retorne APENAS o texto corrigido.`,
             }
 
             .vp-modal {
-                background: var(--vp-bg); color: var(--vp-text); width: min(92vw, 550px);
+                background: var(--vp-bg); color: var(--vp-text);
+                width: min(92vw, 900px);
                 border-radius: 1.25rem; border: 1px solid var(--vp-border);
                 box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column;
                 animation: vp-slide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -494,15 +495,45 @@ Retorne APENAS o texto corrigido.`,
     function generateDiff(oldText, newText) {
         const oldWords = oldText.split(/\s+/);
         const newWords = newText.split(/\s+/);
+        const m = oldWords.length, n = newWords.length;
+
+        // Constrói tabela LCS
+        const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                dp[i][j] = oldWords[i - 1] === newWords[j - 1]
+                    ? dp[i - 1][j - 1] + 1
+                    : Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+
+        // Reconstrói diff a partir da tabela LCS
+        const ops = [];
+        let i = m, j = n;
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && oldWords[i - 1] === newWords[j - 1]) {
+                ops.unshift({ type: 'eq', word: oldWords[i - 1] }); i--; j--;
+            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                ops.unshift({ type: 'add', word: newWords[j - 1] }); j--;
+            } else {
+                ops.unshift({ type: 'rem', word: oldWords[i - 1] }); i--;
+            }
+        }
+
+        // Renderiza agrupando blocos consecutivos de rem/add
         let html = '';
-        let i = 0, j = 0;
-        while (i < oldWords.length || j < newWords.length) {
-            if (i < oldWords.length && j < newWords.length && oldWords[i] === newWords[j]) {
-                html += oldWords[i] + ' '; i++; j++;
-            } else if (i < oldWords.length && (j >= newWords.length || oldWords[i] !== newWords[j])) {
-                html += `<span class="vp-removed">${oldWords[i]}</span> `; i++;
-            } else if (j < newWords.length) {
-                html += `<span class="vp-added">${newWords[j]}</span> `; j++;
+        let k = 0;
+        while (k < ops.length) {
+            if (ops[k].type === 'eq') {
+                html += ops[k].word + ' '; k++;
+            } else {
+                const removed = [], added = [];
+                while (k < ops.length && ops[k].type === 'rem') { removed.push(ops[k].word); k++; }
+                while (k < ops.length && ops[k].type === 'add') { added.push(ops[k].word); k++; }
+                if (removed.length) html += `<span class="vp-removed">${removed.join(' ')}</span>`;
+                if (removed.length && added.length) html += '<br>';
+                if (added.length) html += `<span class="vp-added">${added.join(' ')}</span>`;
+                html += ' ';
             }
         }
         return html;
