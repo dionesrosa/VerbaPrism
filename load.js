@@ -15,7 +15,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
-// @connect      127.0.0.1
+// @connect      localhost
 // @connect      api.groq.com
 // @run-at       document-end
 // ==/UserScript==
