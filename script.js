@@ -273,9 +273,16 @@ Retorne APENAS o texto corrigido.`,
             .vp-floating-btn:hover { transform: scale(1.1) rotate(15deg); box-shadow: 0 15px 30px -5px rgba(237,0,83,0.5); }
 
             .vp-diff-box {
-                background: #020617; border-radius: 0.75rem; padding: 1.25rem; font-family: 'JetBrains Mono', 'Fira Code', monospace;
-                font-size: 0.85rem; margin-top: 1rem; white-space: pre-wrap; line-height: 1.5; border: 1px solid var(--vp-border);
+                background: #020617; border-radius: 0.75rem; overflow: hidden;
+                font-size: 0.85rem; margin-top: 1rem; line-height: 1.6; border: 1px solid var(--vp-border);
             }
+
+            .vp-diff-line {
+                padding: 0.6rem 1rem; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+                white-space: pre-wrap; word-break: break-word;
+            }
+
+            .vp-diff-line + .vp-diff-line { border-top: 1px solid var(--vp-border); }
 
             .vp-removed { color: #ef4444; text-decoration: line-through; background: rgba(239,68,68,0.15); padding: 0 2px; border-radius: 2px; }
             .vp-added { color: #10b981; background: rgba(16,185,129,0.15); padding: 0 2px; border-radius: 2px; font-weight: 600; }
@@ -507,7 +514,7 @@ Retorne APENAS o texto corrigido.`,
             }
         }
 
-        // Reconstrói diff a partir da tabela LCS
+        // Reconstrói lista de operações via LCS
         const ops = [];
         let i = m, j = n;
         while (i > 0 || j > 0) {
@@ -520,23 +527,22 @@ Retorne APENAS o texto corrigido.`,
             }
         }
 
-        // Renderiza agrupando blocos consecutivos de rem/add
-        let html = '';
-        let k = 0;
-        while (k < ops.length) {
-            if (ops[k].type === 'eq') {
-                html += ops[k].word + ' '; k++;
+        // Duas linhas: original (vermelho) e novo (verde)
+        // Palavras iguais aparecem nas duas linhas sem marcação
+        let oldLine = '', newLine = '';
+        for (const op of ops) {
+            if (op.type === 'eq') {
+                oldLine += op.word + ' ';
+                newLine += op.word + ' ';
+            } else if (op.type === 'rem') {
+                oldLine += `<span class="vp-removed">${op.word}</span> `;
             } else {
-                const removed = [], added = [];
-                while (k < ops.length && ops[k].type === 'rem') { removed.push(ops[k].word); k++; }
-                while (k < ops.length && ops[k].type === 'add') { added.push(ops[k].word); k++; }
-                if (removed.length) html += `<span class="vp-removed">${removed.join(' ')}</span>`;
-                if (removed.length && added.length) html += '<br>';
-                if (added.length) html += `<span class="vp-added">${added.join(' ')}</span>`;
-                html += ' ';
+                newLine += `<span class="vp-added">${op.word}</span> `;
             }
         }
-        return html;
+
+        return `<div class="vp-diff-line">${oldLine.trimEnd()}</div>`
+             + `<div class="vp-diff-line">${newLine.trimEnd()}</div>`;
     }
 
     function replaceText(data, newText) {
