@@ -77,16 +77,16 @@ O roadmap do Verba Prism inclui diversas funcionalidades planejadas para expandi
 
 ### 4.1. Funcionalidades de IA Avançadas
 
-*   [ ] **Tradução Integrada**: Adicionar modos de tradução automática para múltiplos idiomas (Inglês, Espanhol, Francês, Alemão, Japonês).
+*   [x] **Tradução Integrada**: Modo "Traduzir (EN)" implementado em `MODES` (script.js, linha 46). Tradução apenas para inglês; múltiplos idiomas ainda pendentes.
 *   [ ] **Ajuste de Tom (Tone Slider)**: Sliders para ajustar o nível de profissionalismo, entusiasmo e criatividade do texto resultante.
-*   [ ] **Resumo de Texto**: Modo específico para resumir seleções longas em diferentes formatos (curto, médio, longo, bullet points).
-*   [ ] **Diferença de Texto Avançada (Diff)**: Expansão do modo diff para incluir comparação por caractere, visualização lado-a-lado, histórico de versões e funcionalidades de desfazer/refazer.
+*   [x] **Resumo de Texto**: Modo "Resumir" implementado em `MODES` (script.js, linha 47), gera bullet points a partir de textos longos.
+*   [ ] **Diferença de Texto Avançada (Diff)**: Diff básico por palavra já implementado (`generateDiff`, script.js linha 372). Comparação por caractere, lado-a-lado, histórico de versões e desfazer/refazer ainda pendentes.
 
 ### 4.2. Funcionalidades de Sistema
 
 *   [ ] **Gerenciador de Histórico**: Interface completa para visualizar, pesquisar, exportar (JSON/CSV) e recuperar textos processados anteriormente.
 *   [ ] **Custom Prompts**: Permitir que usuários criem e salvem seus próprios modos de revisão personalizados.
-*   [ ] **Suporte a Mais Atalhos de Teclado**: Expandir o sistema de atalhos para operações como abrir configurações, histórico, alternar tema e copiar último resultado.
+*   [x] **Atalhos de Teclado (básico)**: `Alt + V` e `Escape` implementados na v2 (documentado em 2.1). Expansão para histórico, alternar tema e copiar último resultado ainda pendente.
 *   [ ] **Integração com Google Docs**: Suporte nativo para melhorar textos diretamente no Google Docs, lidando com sua estrutura DOM complexa.
 *   [ ] **Sincronização de Configurações via Cloud**: Sincronizar configurações entre diferentes dispositivos do usuário (via Firebase ou servidor próprio).
 *   [ ] **Estatísticas de Uso**: Rastrear e exibir métricas como total de textos processados, modo mais usado, provedor mais usado e tempo médio de processamento.
@@ -94,7 +94,7 @@ O roadmap do Verba Prism inclui diversas funcionalidades planejadas para expandi
 ### 4.3. Funcionalidades de UI/UX
 
 *   [ ] **Tema Claro Completo**: Implementar um tema claro com paleta de cores apropriada para melhor acessibilidade e conforto visual.
-*   [ ] **Notificações de Sistema**: Notificações do navegador para eventos importantes, como sucesso no processamento de texto.
+*   [x] **Notificações de Sistema (básico)**: Feedback visual implementado via botão "✓ Copiado" (script.js, linha 351). Notificações nativas do navegador ainda pendentes.
 
 ### 4.4. Priorização de Implementação (Roadmap)
 
