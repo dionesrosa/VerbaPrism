@@ -40,14 +40,22 @@
     // Use template literals para prompts com múltiplas linhas.
     // ============================================
     const MODES = {
-        'Aprimorar': `Melhore a clareza, gramática e fluidez, mantendo o sentido original.
-Caso existam textos entre asteriscos, mantenha este formato.`,
+        'Aprimorar': `Você é um assistente de escrita especializado.
+Melhore a clareza, gramática e fluidez, mantendo o sentido original.
+Caso existam textos entre asteriscos, mantenha este formato.
+Retorne APENAS o texto processado, sem introduções ou explicações.`,
 
-        'Formal': `Reescreva em um tom profissional, elegante e formal.`,
+        'Formal': `Você é um assistente de escrita especializado.
+Reescreva em um tom profissional, elegante e formal.
+Retorne APENAS o texto processado, sem introduções ou explicações.`,
 
-        'Conciso': `Reduza o texto ao essencial, eliminando redundâncias.`,
+        'Conciso': `Você é um assistente de escrita especializado.
+Reduza o texto ao essencial, eliminando redundâncias.
+Retorne APENAS o texto processado, sem introduções ou explicações.`,
 
-        'Criativo': `Dê um toque artístico, expressivo e criativo ao texto.`,
+        'Criativo': `Você é um assistente de escrita especializado.
+Dê um toque artístico, expressivo e criativo ao texto.
+Retorne APENAS o texto processado, sem introduções ou explicações.`,
 
         'Roleplay': `Você é um FORMATADOR RÍGIDO de texto em estilo roleplay.
 Sua função é converter qualquer entrada em uma cena estruturada seguindo regras estritas de formatação, sem criar conteúdo adicional, sem explicações e sem repetir informações.
@@ -77,11 +85,17 @@ OUTPUT: *O personagem observou o ambiente com atenção antes de agir.* Quero ve
 INPUT: personagem se apresenta
 OUTPUT: *O personagem manteve postura calma antes de falar.* Prazer.`,
 
-        'Traduzir (EN)': `Traduza o texto fielmente para o Inglês.`,
+        'Traduzir (EN)': `Você é um assistente de escrita especializado.
+Traduza o texto fielmente para o Inglês.
+Retorne APENAS o texto processado, sem introduções ou explicações.`,
 
-        'Resumir': `Crie um resumo conciso em tópicos (bullet points).`,
+        'Resumir': `Você é um assistente de escrita especializado.
+Crie um resumo conciso em tópicos (bullet points).
+Retorne APENAS o texto processado, sem introduções ou explicações.`,
 
-        'Corrigir': `Apenas corrija erros de ortografia e pontuação, sem alterar o estilo.`,
+        'Corrigir': `Você é um assistente de escrita especializado.
+Apenas corrija erros de ortografia e pontuação, sem alterar o estilo.
+Retorne APENAS o texto processado, sem introduções ou explicações.`,
     };
 
     // Estado global
@@ -221,8 +235,7 @@ OUTPUT: *O personagem manteve postura calma antes de falar.* Prazer.`,
 
         try {
             let responseText = '';
-            const modePrompt = MODES[promptMode];
-            const systemPrompt = `Você é um assistente de escrita especializado.\n\nObjetivo:\n${modePrompt}\n\nRetorne APENAS o texto processado, sem introduções ou explicações.`;
+            const systemPrompt = MODES[promptMode];
 
             if (currentProvider === 'gemini') {
                 const url = provider.apiUrl.replace('{model}', model) + `?key=${key}`;
