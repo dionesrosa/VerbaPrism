@@ -206,7 +206,7 @@ Retorne APENAS o texto corrigido.`,
 
             .vp-modal {
                 background: var(--vp-bg); color: var(--vp-text);
-                width: min(92vw, 900px);
+                width: min(92vw, 620px); max-height: min(90vh, 720px);
                 border-radius: 1.25rem; border: 1px solid var(--vp-border);
                 box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column;
                 animation: vp-slide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -216,12 +216,12 @@ Retorne APENAS o texto corrigido.`,
             .vp-header {
                 padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--vp-border);
                 display: flex; justify-content: space-between; align-items: center;
-                background: rgba(255,255,255,0.02);
+                background: rgba(255,255,255,0.02); flex-shrink: 0;
             }
 
             .vp-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--vp-accent); text-transform: uppercase; letter-spacing: 0.05em; }
 
-            .vp-body { padding: 1.5rem; overflow-y: auto; max-height: 75vh; }
+            .vp-body { padding: 1.5rem; overflow-y: auto; flex: 1; min-height: 0; }
 
             .vp-footer {
                 padding: 1.25rem; border-top: 1px solid var(--vp-border);
@@ -259,7 +259,7 @@ Retorne APENAS o texto corrigido.`,
             .vp-btn-secondary { background: var(--vp-card); color: var(--vp-text); border: 1px solid var(--vp-border); }
             .vp-btn-secondary:hover { background: #334155; }
 
-            .vp-textarea { min-height: 220px; resize: vertical; line-height: 1.6; font-family: inherit; }
+            .vp-textarea { min-height: 140px; max-height: 280px; resize: vertical; line-height: 1.6; font-family: inherit; }
 
             .vp-floating-btn {
                 position: fixed; right: 24px; bottom: 24px; width: 54px; height: 54px;
@@ -477,12 +477,24 @@ Retorne APENAS o texto corrigido.`,
         `;
         openModal('VERBA PRISM - RESULTADO', content, footer);
         document.getElementById('vp-res-copy').onclick = () => {
-            GM_setClipboard(document.getElementById('vp-result-text').value);
-            document.getElementById('vp-res-copy').textContent = '✓ Copiado';
+            const text = document.getElementById('vp-result-text').value;
+            const btn = document.getElementById('vp-res-copy');
+            const done = () => { btn.textContent = '✓ Copiado'; };
+            if (typeof GM_setClipboard !== 'undefined') {
+                GM_setClipboard(text); done();
+            } else {
+                navigator.clipboard.writeText(text).then(done).catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                    document.body.appendChild(ta); ta.select();
+                    document.execCommand('copy'); ta.remove(); done();
+                });
+            }
         };
         document.getElementById('vp-res-replace').onclick = () => {
-            replaceText(selectionData, document.getElementById('vp-result-text').value);
+            const newText = document.getElementById('vp-result-text').value;
             closeModal();
+            replaceText(selectionData, newText);
         };
     }
 
@@ -548,12 +560,20 @@ Retorne APENAS o texto corrigido.`,
     function replaceText(data, newText) {
         if (data.source === 'input' && data.element) {
             const el = data.element;
+            el.focus();
             const val = el.value;
             el.value = val.slice(0, data.start) + newText + val.slice(data.end);
+            el.selectionStart = data.start;
+            el.selectionEnd = data.start + newText.length;
             el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
         } else if (data.source === 'range' && data.range) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(data.range);
             data.range.deleteContents();
             data.range.insertNode(document.createTextNode(newText));
+            sel.removeAllRanges();
         }
     }
 
