@@ -616,7 +616,8 @@ Retorne APENAS o texto corrigido.`,
             else alert('Selecione um texto ou clique em um campo preenchido.');
         };
         document.addEventListener('focusin', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')
+                && !e.target.closest('.vp-modal')) {
                 lastFocusedField = e.target;
                 floatingBtn.style.display = 'flex';
             }
@@ -625,7 +626,8 @@ Retorne APENAS o texto corrigido.`,
         // Salva posição da seleção no campo ativo a cada interação
         const saveSelection = (e) => {
             const el = e.target;
-            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')
+                && !el.closest('.vp-modal')) {
                 el._vpStart = el.selectionStart;
                 el._vpEnd   = el.selectionEnd;
             }
