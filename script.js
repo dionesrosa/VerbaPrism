@@ -571,23 +571,32 @@ Retorne APENAS o texto corrigido.`,
             const sel = window.getSelection();
             sel.removeAllRanges();
             sel.addRange(data.range);
-            data.range.deleteContents();
-            data.range.insertNode(document.createTextNode(newText));
-            sel.removeAllRanges();
+            // execCommand preserva o undo nativo e funciona em contenteditable
+            const ok = document.execCommand('insertText', false, newText);
+            if (!ok) {
+                // fallback direto para elementos que aceitam mutação
+                data.range.deleteContents();
+                data.range.insertNode(document.createTextNode(newText));
+                sel.removeAllRanges();
+            }
         }
     }
 
     function getSelectionData() {
+        // Prioridade 1: input/textarea com seleção salva continuamente
+        if (lastFocusedField) {
+            const el = lastFocusedField;
+            const start = el._vpStart ?? 0;
+            const end   = el._vpEnd   ?? el.value.length;
+            const text  = el.value.slice(start, end) || el.value;
+            const s = text === el.value ? 0 : start;
+            const e = text === el.value ? el.value.length : end;
+            if (el.value) return { source: 'input', element: el, text, start: s, end: e };
+        }
+        // Prioridade 2: seleção de texto livre (range)
         const sel = window.getSelection();
         const text = sel.toString().trim();
-        if (text) return { source: 'range', range: sel.getRangeAt(0).cloneRange(), text };
-        if (lastFocusedField && lastFocusedField.value) {
-            const el = lastFocusedField;
-            if (el.selectionStart !== el.selectionEnd) {
-                return { source: 'input', element: el, text: el.value.slice(el.selectionStart, el.selectionEnd), start: el.selectionStart, end: el.selectionEnd };
-            }
-            return { source: 'input', element: el, text: el.value, start: 0, end: el.value.length };
-        }
+        if (text && sel.rangeCount) return { source: 'range', range: sel.getRangeAt(0).cloneRange(), text };
         return null;
     }
 
@@ -612,6 +621,17 @@ Retorne APENAS o texto corrigido.`,
                 floatingBtn.style.display = 'flex';
             }
         });
+
+        // Salva posição da seleção no campo ativo a cada interação
+        const saveSelection = (e) => {
+            const el = e.target;
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                el._vpStart = el.selectionStart;
+                el._vpEnd   = el.selectionEnd;
+            }
+        };
+        document.addEventListener('mouseup', saveSelection);
+        document.addEventListener('keyup',   saveSelection);
         document.addEventListener('mousedown', (e) => {
             if (!e.target.closest('.vp-floating-btn') && !e.target.closest('.vp-modal')) {
                 setTimeout(() => { if (!window.getSelection().toString()) {
