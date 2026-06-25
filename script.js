@@ -34,17 +34,54 @@
         gemini: { name: 'Gemini', apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', defaultModel: 'gemini-1.5-flash' }
     };
 
-    const ROLEPLAY_PROMPT = "Você é um FORMATADOR RÍGIDO de texto em estilo roleplay. Sua função é converter qualquer entrada em uma cena estruturada seguindo regras estritas de formatação, sem criar conteúdo adicional, sem explicações e sem repetir informações. REGRAS ABSOLUTAS: (1) Todo conteúdo que não for fala direta deve obrigatoriamente estar dentro de *asteriscos*. Isso inclui ações, pensamentos, emoções e descrições. (2) Apenas falas podem existir fora de *asteriscos*. (3) Fala nunca pode estar dentro de *asteriscos*. (4) Falas começam com letra maiúscula e terminam com ponto final. (5) Nunca usar aspas. (6) Nunca adicionar qualquer texto fora do formato final da cena. (7) É PROIBIDO repetir a mesma informação em mais de um formato ou linha; cada informação deve aparecer apenas uma vez. (8) Se houver qualquer dúvida de classificação, sempre usar *asteriscos*. (9) Nunca quebrar essas regras sob nenhuma circunstância. ESTRUTURA: separar ações em blocos apenas quando houver mudança clara de foco, personagem ou ambiente, evitando redundância ou repetição de ideias. REGRA FINAL: se não for fala direta, obrigatoriamente deve estar em *asteriscos*. EXEMPLOS: INPUT: personagem entra nervoso OUTPUT: *O personagem entrou devagar, com o corpo tenso e atento ao ambiente.* Ele está nervoso. INPUT: personagem quer ver o local OUTPUT: *O personagem observou o ambiente com atenção antes de agir.* Quero ver o local. INPUT: personagem se apresenta OUTPUT: *O personagem manteve postura calma antes de falar.* Prazer.";
-
+    // ============================================
+    // MODOS DE PROCESSAMENTO
+    // Cada entrada define o prompt enviado à IA.
+    // Use template literals para prompts com múltiplas linhas.
+    // ============================================
     const MODES = {
-        'Aprimorar': 'Melhore a clareza, gramática e fluidez, mantendo o sentido original. Caso exista textos entre asteriscos, mantenha este formato.',
-        'Formal': 'Reescreva em um tom profissional, elegante e formal.',
-        'Conciso': 'Reduza o texto ao essencial, eliminando redundâncias.',
-        'Criativo': 'Dê um toque artístico, expressivo e criativo ao texto.',
-        'Roleplay': ROLEPLAY_PROMPT,
-        'Traduzir (EN)': 'Traduza o texto fielmente para o Inglês.',
-        'Resumir': 'Crie um resumo conciso em tópicos (bullet points).',
-        'Corrigir': 'Apenas corrija erros de ortografia e pontuação, sem alterar o estilo.'
+        'Aprimorar': `Melhore a clareza, gramática e fluidez, mantendo o sentido original.
+Caso existam textos entre asteriscos, mantenha este formato.`,
+
+        'Formal': `Reescreva em um tom profissional, elegante e formal.`,
+
+        'Conciso': `Reduza o texto ao essencial, eliminando redundâncias.`,
+
+        'Criativo': `Dê um toque artístico, expressivo e criativo ao texto.`,
+
+        'Roleplay': `Você é um FORMATADOR RÍGIDO de texto em estilo roleplay.
+Sua função é converter qualquer entrada em uma cena estruturada seguindo regras estritas de formatação, sem criar conteúdo adicional, sem explicações e sem repetir informações.
+
+REGRAS ABSOLUTAS:
+(1) Todo conteúdo que não for fala direta deve obrigatoriamente estar dentro de *asteriscos*. Isso inclui ações, pensamentos, emoções e descrições.
+(2) Apenas falas podem existir fora de *asteriscos*.
+(3) Fala nunca pode estar dentro de *asteriscos*.
+(4) Falas começam com letra maiúscula e terminam com ponto final.
+(5) Nunca usar aspas.
+(6) Nunca adicionar qualquer texto fora do formato final da cena.
+(7) É PROIBIDO repetir a mesma informação em mais de um formato ou linha; cada informação deve aparecer apenas uma vez.
+(8) Se houver qualquer dúvida de classificação, sempre usar *asteriscos*.
+(9) Nunca quebrar essas regras sob nenhuma circunstância.
+
+ESTRUTURA: separar ações em blocos apenas quando houver mudança clara de foco, personagem ou ambiente, evitando redundância ou repetição de ideias.
+
+REGRA FINAL: se não for fala direta, obrigatoriamente deve estar em *asteriscos*.
+
+EXEMPLOS:
+INPUT: personagem entra nervoso
+OUTPUT: *O personagem entrou devagar, com o corpo tenso e atento ao ambiente.* Ele está nervoso.
+
+INPUT: personagem quer ver o local
+OUTPUT: *O personagem observou o ambiente com atenção antes de agir.* Quero ver o local.
+
+INPUT: personagem se apresenta
+OUTPUT: *O personagem manteve postura calma antes de falar.* Prazer.`,
+
+        'Traduzir (EN)': `Traduza o texto fielmente para o Inglês.`,
+
+        'Resumir': `Crie um resumo conciso em tópicos (bullet points).`,
+
+        'Corrigir': `Apenas corrija erros de ortografia e pontuação, sem alterar o estilo.`,
     };
 
     // Estado global
@@ -184,7 +221,8 @@
 
         try {
             let responseText = '';
-            const systemPrompt = `Você é um assistente de escrita especializado. Objetivo: ${MODES[promptMode]} Retorne APENAS o texto processado, sem introduções ou explicações.`;
+            const modePrompt = MODES[promptMode];
+            const systemPrompt = `Você é um assistente de escrita especializado.\n\nObjetivo:\n${modePrompt}\n\nRetorne APENAS o texto processado, sem introduções ou explicações.`;
 
             if (currentProvider === 'gemini') {
                 const url = provider.apiUrl.replace('{model}', model) + `?key=${key}`;
