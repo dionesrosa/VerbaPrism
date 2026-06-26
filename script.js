@@ -551,12 +551,6 @@ Retorne APENAS o texto corrigido.`,
     // MODAL DE RESULTADO
     // ============================================
     function openResult(originalText, resultText) {
-        // Congela o alvo de substituição antes de o modal roubar o foco
-        frozenSelection = {
-            text:    lastSelection.text,
-            range:   lastSelection.range,
-            element: lastSelection.element,
-        };
         injectStyles();
         closeOverlay();
 
@@ -794,10 +788,18 @@ Retorne APENAS o texto corrigido.`,
         fab.title = 'Verba Prism — aprimorar texto selecionado';
         fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L15 9 L22 12 L15 15 L12 22 L9 15 L2 12 L9 9 Z"/></svg>`;
         fab.style.display = 'none';
-        fab.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); });
+        fab.addEventListener('mousedown', e => {
+            e.preventDefault(); e.stopPropagation();
+            // Congela aqui, antes de o clique roubar o foco e limpar lastSelection
+            frozenSelection = {
+                text:    lastSelection.text,
+                range:   lastSelection.range,
+                element: lastSelection.element,
+            };
+        });
         fab.addEventListener('click', e => {
             e.preventDefault(); e.stopPropagation();
-            const text = lastSelection.text || window.getSelection()?.toString() || '';
+            const text = frozenSelection.text || window.getSelection()?.toString() || '';
             fab.style.display = 'none';
             openResult(text, '');
         });
@@ -843,7 +845,12 @@ Retorne APENAS o texto corrigido.`,
     document.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'L' || e.key === 'l')) {
             e.preventDefault();
-            const text = lastSelection.text || window.getSelection()?.toString() || '';
+            frozenSelection = {
+                text:    lastSelection.text,
+                range:   lastSelection.range,
+                element: lastSelection.element,
+            };
+            const text = frozenSelection.text || window.getSelection()?.toString() || '';
             openResult(text, '');
         }
     }, true);
