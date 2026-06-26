@@ -1,52 +1,47 @@
 // ==UserScript==
 // @name         Verba Prism
 // @namespace    https://github.com/dionesrosa
-// @version      0.5.0
-// @description  Aprimora texto com abas para chaves de API, seletor de provedor ativo e modos de processamento expandidos.
+// @version      0.6.0
+// @description  Aprimora texto com IA em qualquer site. Selecione um texto e melhore com um clique.
 // @author       Diones Souza
 // @license      MIT
-// @icon         https://cdn-icons-png.magnific.com/64/9708/9708616.png
-// @homepageURL  https://github.com/dionesrosa/VerbaPrism
-// @supportURL   https://github.com/dionesrosa/VerbaPrism/issues
-// @updateURL    https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
-// @downloadURL  https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
 // @match        *://*/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_setClipboard
-// @connect      localhost
 // @connect      api.groq.com
 // @connect      api.openai.com
 // @connect      generativelanguage.googleapis.com
-// @run-at       document-end
+// @run-at       document-idle
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     if (window.top !== window.self) return;
 
     // ============================================
-    // CONSTANTES E CONFIGURAÇÕES
+    // CONSTANTES
     // ============================================
-    const ACCENT_COLOR = '#ED0053';
-    const MODAL_Z_INDEX = 100000;
-    
+    const MODAL_Z = 2147483647;
+
     const PROVIDERS = {
-        groq: { name: 'Groq', apiUrl: 'https://api.groq.com/openai/v1/chat/completions', defaultModel: 'llama-3.3-70b-versatile' },
-        openai: { name: 'OpenAI', apiUrl: 'https://api.openai.com/v1/chat/completions', defaultModel: 'gpt-4o-mini' },
-        gemini: { name: 'Gemini', apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', defaultModel: 'gemini-1.5-flash' }
+        groq:   { name: 'Groq',          apiUrl: 'https://api.groq.com/openai/v1/chat/completions',                              defaultModel: 'llama-3.3-70b-versatile' },
+        openai: { name: 'OpenAI',         apiUrl: 'https://api.openai.com/v1/chat/completions',                                   defaultModel: 'gpt-4o-mini' },
+        gemini: { name: 'Gemini',         apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', defaultModel: 'gemini-1.5-flash' },
     };
+
+    const GROQ_MODELS   = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
+    const OPENAI_MODELS = ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1'];
+    const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'];
 
     // ============================================
     // MODOS DE PROCESSAMENTO
-    // Cada entrada define o prompt enviado à IA.
-    // Use template literals para prompts com múltiplas linhas.
     // ============================================
     const MODES = {
-    'Aprimorar': `Você é um assistente de escrita avançado, especializado em revisão de textos em português.
+        'Aprimorar': `Você é um assistente de escrita avançado, especializado em revisão de textos em português.
 Seu objetivo é melhorar a clareza, fluidez e correção gramatical, mantendo o significado original e o tom do autor.
 Regras:
 - Corrija ortografia, gramática e pontuação discretamente.
@@ -56,7 +51,7 @@ Regras:
 - Se houver trechos entre asteriscos (ex: *assim*), mantenha exatamente essa formatação.
 Retorne APENAS o texto processado, sem comentários, explicações ou introduções.`,
 
-    'Formal': `Você é um assistente de escrita que transforma textos para um registro formal, profissional e elegante.
+        'Formal': `Você é um assistente de escrita que transforma textos para um registro formal, profissional e elegante.
 Ajuste o tom para um nível culto, respeitoso e adequado a ambientes corporativos ou acadêmicos, sem perder o conteúdo original.
 Regras:
 - Utilize vocabulário polido e construção impessoal quando apropriado.
@@ -65,7 +60,7 @@ Regras:
 - Não invente dados ou opiniões.
 Retorne APENAS o texto processado, sem comentários ou introduções.`,
 
-    'Conciso': `Você é um especialista em comunicação objetiva.
+        'Conciso': `Você é um especialista em comunicação objetiva.
 Reduza o texto ao essencial, eliminando repetições, rodeios e informações redundantes, sem cortar o conteúdo central.
 Regras:
 - Frases curtas e diretas.
@@ -73,7 +68,7 @@ Regras:
 - Sem incluir interpretações pessoais.
 Retorne APENAS o texto processado, sem comentários ou introduções.`,
 
-    'Criativo': `Você é um redator criativo com talento para transformar textos comuns em algo expressivo, envolvente e artístico.
+        'Criativo': `Você é um redator criativo com talento para transformar textos comuns em algo expressivo, envolvente e artístico.
 Adicione recursos estilísticos como metáforas, ritmo e um vocabulário mais rico, mantendo-se fiel à ideia original.
 Regras:
 - O resultado deve ser interessante e agradável de ler.
@@ -81,7 +76,7 @@ Regras:
 - Não ultrapasse os limites do bom senso estilístico.
 Retorne APENAS o texto processado, sem comentários ou introduções.`,
 
-    'Roleplay': `Você é um escritor narrativo controlado que transforma descrições simples de cenas em literatura no estilo roleplay.
+        'Roleplay': `Você é um escritor narrativo controlado que transforma descrições simples de cenas em literatura no estilo roleplay.
 Seu trabalho é converter a entrada do usuário em uma cena fluida, com ambientação, emoção e ritmo, seguindo rigorosamente a formatação abaixo e sendo ESTRITAMENTE FIEL ao que foi informado.
 
 FORMATO OBRIGATÓRIO:
@@ -149,7 +144,7 @@ Você tá namorando ela?! Foi por isso que ela me largou?
 
 Agora, transforme a entrada do usuário seguindo EXATAMENTE essas regras e o estilo dos exemplos, sem inventar conteúdo extra.`,
 
-    'Traduzir (EN)': `Você é um tradutor profissional de português para inglês.
+        'Traduzir (EN)': `Você é um tradutor profissional de português para inglês.
 Traduza o texto fornecido de forma precisa, mantendo tom, estilo e nuances do original.
 Regras:
 - Somente o texto traduzido.
@@ -157,7 +152,7 @@ Regras:
 - Fidelidade total ao conteúdo.
 Retorne APENAS o texto traduzido.`,
 
-    'Resumir': `Você é um assistente que cria resumos estruturados.
+        'Resumir': `Você é um assistente que cria resumos estruturados.
 Resuma o texto em tópicos no formato de bullet points, extraindo apenas as informações essenciais.
 Regras:
 - Use "- " no início de cada tópico.
@@ -165,7 +160,7 @@ Regras:
 - Sem introduções como "Aqui está o resumo".
 Retorne APENAS os bullet points.`,
 
-    'Corrigir': `Você é um revisor ortográfico conservador.
+        'Corrigir': `Você é um revisor ortográfico conservador.
 Corrija EXCLUSIVAMENTE erros de ortografia, acentuação e pontuação. Não altere vocabulário, estrutura de frases ou tom.
 Regras:
 - Não troque palavras por sinônimos.
@@ -173,135 +168,243 @@ Regras:
 - Se o texto original tiver gírias ou expressões informais, mantenha-as.
 - Retorne o texto com a mesma estrutura, apenas com os erros corrigidos.
 Retorne APENAS o texto corrigido.`,
-};
-
-    // Estado global
-    let currentProvider = GM_getValue('provider', 'groq');
-    let apiKeys = GM_getValue('apiKeys', { groq: '', openai: '', gemini: '' });
-    let selectedModels = GM_getValue('selectedModels', { groq: 'llama-3.3-70b-versatile', openai: 'gpt-4o-mini', gemini: 'gemini-1.5-flash' });
-    let promptMode = GM_getValue('promptMode', 'Aprimorar');
-    let showDiffMode = GM_getValue('showDiffMode', true);
-    let locale = GM_getValue('locale', 'pt');
-
-    // UI Elements
-    let backdrop = null;
-    let activeModal = null;
-    let floatingBtn = null;
-
-    // Captura de seleção — atualizada continuamente
-    let lastSelection = { text: '', range: null, element: null };
+    };
 
     // ============================================
-    // ESTILOS (UI COM ABAS)
+    // ESTADO GLOBAL
+    // ============================================
+    let currentProvider  = GM_getValue('provider', 'groq');
+    let apiKeys          = GM_getValue('apiKeys', { groq: '', openai: '', gemini: '' });
+    let selectedModels   = GM_getValue('selectedModels', { groq: 'llama-3.3-70b-versatile', openai: 'gpt-4o-mini', gemini: 'gemini-1.5-flash' });
+    let promptMode       = GM_getValue('promptMode', 'Aprimorar');
+
+    // Captura de seleção — atualizada continuamente
+    let lastSelection   = { text: '', range: null, element: null };
+    // Snapshot congelado no momento em que o modal é aberto — usado para substituição
+    let frozenSelection = { text: '', range: null, element: null };
+
+    // ============================================
+    // ESTILOS
     // ============================================
     function injectStyles() {
         if (document.getElementById('vp-styles')) return;
         const css = `
-            :root {
-                --vp-accent: ${ACCENT_COLOR};
-                --vp-bg: #0f172a;
-                --vp-card: #1e293b;
-                --vp-text: #f1f5f9;
-                --vp-text-dim: #94a3b8;
-                --vp-border: rgba(255,255,255,0.08);
-            }
+        :root {
+            --vp-bg: #0d0a10;
+            --vp-bg2: #16111c;
+            --vp-surface: #1c1626;
+            --vp-border: #2a2233;
+            --vp-text: #f3eef7;
+            --vp-muted: #a89bb5;
+            --vp-pink: #ff2d87;
+            --vp-pink-soft: rgba(255,45,135,0.15);
+            --vp-shadow: 0 20px 60px rgba(255,45,135,0.25), 0 8px 24px rgba(0,0,0,0.5);
+        }
 
-            .vp-modal-backdrop {
-                position: fixed; inset: 0; background: rgba(2,6,23,0.85); backdrop-filter: blur(8px);
-                z-index: ${MODAL_Z_INDEX}; display: flex; align-items: center; justify-content: center;
-                animation: vp-fade 0.2s ease-out;
-            }
+        /* FAB */
+        .vp-fab {
+            position: fixed; z-index: ${MODAL_Z - 1};
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--vp-pink), #b71d62);
+            box-shadow: var(--vp-shadow);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff; user-select: none;
+            transition: transform .15s ease; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .vp-fab:hover { transform: scale(1.07); }
+        .vp-fab svg { width: 22px; height: 22px; }
 
-            .vp-modal {
-                background: var(--vp-bg); color: var(--vp-text);
-                width: min(92vw, 620px); max-height: min(90vh, 720px);
-                border-radius: 1.25rem; border: 1px solid var(--vp-border);
-                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column;
-                animation: vp-slide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            }
+        /* Overlay */
+        .vp-overlay {
+            position: fixed; inset: 0; z-index: ${MODAL_Z};
+            background: rgba(8,5,12,0.75); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--vp-text);
+        }
 
-            .vp-header {
-                padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--vp-border);
-                display: flex; justify-content: space-between; align-items: center;
-                background: rgba(255,255,255,0.02); flex-shrink: 0;
-            }
+        /* Modal */
+        .vp-modal {
+            width: min(680px, 92vw); max-height: 88vh;
+            background: linear-gradient(180deg, var(--vp-bg2), var(--vp-bg));
+            border: 1px solid var(--vp-border); border-radius: 16px;
+            box-shadow: var(--vp-shadow);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
 
-            .vp-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--vp-accent); text-transform: uppercase; letter-spacing: 0.05em; }
+        /* Header */
+        .vp-header {
+            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+            padding: 14px 18px; border-bottom: 1px solid var(--vp-border);
+            background: linear-gradient(90deg, rgba(255,45,135,0.12), transparent);
+        }
+        .vp-logo {
+            width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--vp-pink), #7a1346);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 13px;
+        }
+        .vp-title { font-size: 15px; font-weight: 700; letter-spacing: .2px; }
+        .vp-title span { color: var(--vp-pink); }
+        .vp-sub { color: var(--vp-muted); font-size: 12px; margin-left: auto; }
+        .vp-close {
+            margin-left: 12px; cursor: pointer; color: var(--vp-muted);
+            background: transparent; border: 0; font-size: 20px; line-height: 1;
+            padding: 0;
+        }
+        .vp-close:hover { color: var(--vp-pink); }
 
-            .vp-body { padding: 1.5rem; overflow-y: auto; flex: 1; min-height: 0; }
+        /* Body */
+        .vp-body { padding: 16px 18px; overflow-y: auto; flex: 1; min-height: 0; }
+        .vp-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .vp-field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
+        .vp-label { font-size: 11px; color: var(--vp-muted); text-transform: uppercase; letter-spacing: .8px; }
 
-            .vp-footer {
-                padding: 1.25rem; border-top: 1px solid var(--vp-border);
-                display: flex; justify-content: flex-end; gap: 0.75rem; background: rgba(0,0,0,0.15);
-            }
+        /* Inputs */
+        .vp-input, .vp-select, .vp-textarea {
+            background: var(--vp-surface); color: var(--vp-text);
+            border: 1px solid var(--vp-border); border-radius: 8px;
+            padding: 9px 11px; font-size: 13px; outline: none; width: 100%;
+            transition: border-color .15s, box-shadow .15s; font-family: inherit;
+            box-sizing: border-box;
+        }
+        .vp-input:focus, .vp-select:focus, .vp-textarea:focus {
+            border-color: var(--vp-pink); box-shadow: 0 0 0 3px var(--vp-pink-soft);
+        }
+        .vp-textarea { min-height: 130px; max-height: 260px; resize: vertical; line-height: 1.6; }
+        .vp-textarea.result { background: #120e18; border-color: rgba(255,45,135,0.35); }
 
-            /* Tabs System */
-            .vp-tabs { display: flex; border-bottom: 1px solid var(--vp-border); margin-bottom: 1.5rem; gap: 4px; }
-            .vp-tab {
-                padding: 0.75rem 1rem; cursor: pointer; color: var(--vp-text-dim); font-size: 0.875rem;
-                font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s;
-                flex: 1; text-align: center;
-            }
-            .vp-tab:hover { color: var(--vp-text); background: rgba(255,255,255,0.03); }
-            .vp-tab.active { color: var(--vp-accent); border-bottom-color: var(--vp-accent); background: rgba(237,0,83,0.05); }
+        /* Actions bar */
+        .vp-actions {
+            display: flex; gap: 8px; padding: 14px 18px; flex-wrap: wrap; flex-shrink: 0;
+            border-top: 1px solid var(--vp-border); background: var(--vp-bg2);
+        }
+        .vp-spacer { flex: 1; }
 
-            .vp-input-group { margin-bottom: 1.25rem; }
-            .vp-label { display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--vp-text-dim); text-transform: uppercase; }
-            
-            .vp-input, .vp-select, .vp-textarea {
-                width: 100%; background: var(--vp-card); border: 1px solid var(--vp-border);
-                border-radius: 0.75rem; padding: 0.8rem; color: var(--vp-text);
-                font-size: 0.95rem; transition: all 0.2s; box-sizing: border-box;
-            }
+        /* Buttons */
+        .vp-btn {
+            border: 1px solid var(--vp-border); background: var(--vp-surface);
+            color: var(--vp-text); padding: 9px 14px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 600; transition: all .15s; font-family: inherit;
+        }
+        .vp-btn:hover { border-color: var(--vp-pink); color: var(--vp-pink); }
+        .vp-btn.primary {
+            background: linear-gradient(135deg, var(--vp-pink), #b71d62);
+            border-color: transparent; color: #fff;
+        }
+        .vp-btn.primary:hover { filter: brightness(1.1); color: #fff; }
+        .vp-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-            .vp-input:focus, .vp-select:focus { border-color: var(--vp-accent); outline: none; background: #2d3a4f; }
+        /* Tabs */
+        .vp-tabs {
+            display: flex; gap: 4px; background: var(--vp-surface); padding: 4px;
+            border-radius: 10px; border: 1px solid var(--vp-border); margin-bottom: 14px;
+        }
+        .vp-tab {
+            flex: 1; text-align: center; padding: 7px 10px; border-radius: 7px;
+            cursor: pointer; font-size: 12px; color: var(--vp-muted); font-weight: 600;
+            transition: all .15s;
+        }
+        .vp-tab.active { background: linear-gradient(135deg, var(--vp-pink), #b71d62); color: #fff; }
 
-            .vp-btn {
-                padding: 0.7rem 1.4rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer;
-                transition: all 0.2s; border: none; font-size: 0.85rem;
-            }
+        /* Provider tabs (settings) */
+        .vp-provider-tabs {
+            display: flex; gap: 4px; margin-bottom: 16px;
+        }
+        .vp-provider-tab {
+            flex: 1; text-align: center; padding: 8px; border-radius: 8px; cursor: pointer;
+            font-size: 12px; font-weight: 700; color: var(--vp-muted);
+            border: 1px solid var(--vp-border); background: var(--vp-surface);
+            transition: all .15s; text-transform: uppercase; letter-spacing: .5px;
+        }
+        .vp-provider-tab.active { border-color: var(--vp-pink); color: var(--vp-pink); background: var(--vp-pink-soft); }
 
-            .vp-btn-primary { background: var(--vp-accent); color: white; box-shadow: 0 4px 12px rgba(237,0,83,0.3); }
-            .vp-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(237,0,83,0.4); }
-            .vp-btn-secondary { background: var(--vp-card); color: var(--vp-text); border: 1px solid var(--vp-border); }
-            .vp-btn-secondary:hover { background: #334155; }
+        /* Toast */
+        .vp-toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: var(--vp-surface); border: 1px solid var(--vp-pink);
+            color: var(--vp-text); padding: 10px 16px; border-radius: 10px;
+            box-shadow: var(--vp-shadow); z-index: ${MODAL_Z}; font-size: 13px;
+            font-family: system-ui, sans-serif; white-space: nowrap;
+        }
 
-            .vp-textarea { min-height: 140px; max-height: 280px; resize: vertical; line-height: 1.6; font-family: inherit; }
+        /* Loader */
+        .vp-loader {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.25); border-top-color: #fff;
+            display: inline-block; animation: vp-spin .8s linear infinite;
+            vertical-align: -2px; margin-right: 6px;
+        }
+        @keyframes vp-spin { to { transform: rotate(360deg); } }
 
-            .vp-floating-btn {
-                position: fixed; width: 54px; height: 54px;
-                background: var(--vp-accent); color: white; border-radius: 50%;
-                display: flex; align-items: center; justify-content: center; cursor: pointer;
-                box-shadow: 0 10px 25px -5px rgba(237,0,83,0.4); z-index: ${MODAL_Z_INDEX - 1};
-                transition: transform 0.2s, box-shadow 0.2s; border: 2px solid rgba(255,255,255,0.1);
-                font-size: 1.6rem;
-            }
+        /* Diff */
+        .vp-diff-box {
+            background: #0a0712; border-radius: 8px; overflow: hidden;
+            font-size: 12px; margin-top: 12px; line-height: 1.6;
+            border: 1px solid var(--vp-border);
+        }
+        .vp-diff-line {
+            padding: 8px 12px; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            white-space: pre-wrap; word-break: break-word;
+        }
+        .vp-diff-line + .vp-diff-line { border-top: 1px solid var(--vp-border); }
+        .vp-removed { color: #ef4444; text-decoration: line-through; background: rgba(239,68,68,0.15); padding: 0 2px; border-radius: 2px; }
+        .vp-added  { color: #10b981; background: rgba(16,185,129,0.15); padding: 0 2px; border-radius: 2px; font-weight: 600; }
 
-            .vp-floating-btn:hover { transform: scale(1.1) rotate(15deg); box-shadow: 0 15px 30px -5px rgba(237,0,83,0.5); }
-
-            .vp-diff-box {
-                background: #020617; border-radius: 0.75rem; overflow: hidden;
-                font-size: 0.85rem; margin-top: 1rem; line-height: 1.6; border: 1px solid var(--vp-border);
-            }
-
-            .vp-diff-line {
-                padding: 0.6rem 1rem; font-family: 'JetBrains Mono', 'Fira Code', monospace;
-                white-space: pre-wrap; word-break: break-word;
-            }
-
-            .vp-diff-line + .vp-diff-line { border-top: 1px solid var(--vp-border); }
-
-            .vp-removed { color: #ef4444; text-decoration: line-through; background: rgba(239,68,68,0.15); padding: 0 2px; border-radius: 2px; }
-            .vp-added { color: #10b981; background: rgba(16,185,129,0.15); padding: 0 2px; border-radius: 2px; font-weight: 600; }
-
-            @keyframes vp-fade { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes vp-slide { from { transform: translateY(30px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        hr.vp-sep { border: 0; border-top: 1px solid var(--vp-border); margin: 14px 0; }
         `;
-        const style = document.createElement('style');
-        style.id = 'vp-styles';
-        style.textContent = css;
-        document.head.appendChild(style);
+        const s = document.createElement('style');
+        s.id = 'vp-styles';
+        s.textContent = css;
+        document.documentElement.appendChild(s);
+    }
+
+    // ============================================
+    // HELPERS DE DOM
+    // ============================================
+    function el(tag, attrs = {}, ...children) {
+        const e = document.createElement(tag);
+        for (const [k, v] of Object.entries(attrs)) {
+            if (k === 'class') e.className = v;
+            else if (k === 'style') e.setAttribute('style', v);
+            else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+            else e.setAttribute(k, v);
+        }
+        for (const c of children) {
+            if (c == null) continue;
+            e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+        }
+        return e;
+    }
+
+    function toast(msg) {
+        document.querySelectorAll('.vp-toast').forEach(t => t.remove());
+        const t = document.createElement('div');
+        t.className = 'vp-toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2400);
+    }
+
+    function closeOverlay() {
+        document.querySelectorAll('.vp-overlay').forEach(n => n.remove());
+    }
+
+    function makeOverlay(modalEl) {
+        const overlay = el('div', { class: 'vp-overlay' });
+        overlay.appendChild(modalEl);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeOverlay(); });
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function makeHeader(subtitle) {
+        return el('div', { class: 'vp-header' },
+            el('div', { class: 'vp-logo' }, 'V'),
+            el('div', { class: 'vp-title' }, 'Verba ', el('span', {}, 'Prism')),
+            el('div', { class: 'vp-sub' }, subtitle),
+            el('button', { class: 'vp-close', onclick: closeOverlay }, '×'),
+        );
     }
 
     // ============================================
@@ -315,7 +418,7 @@ Retorne APENAS o texto corrigido.`,
             lastSelection.element = null;
         } else {
             const ae = document.activeElement;
-            if (ae && !ae.closest('.vp-modal') &&
+            if (ae && !ae.closest('.vp-overlay') &&
                 (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /text|search|url|email/i.test(ae.type || 'text')))) {
                 const start = ae.selectionStart, end = ae.selectionEnd;
                 if (start !== end) {
@@ -324,7 +427,6 @@ Retorne APENAS o texto corrigido.`,
                     lastSelection.range = null;
                     return;
                 }
-                // campo inteiro se não houver seleção parcial
                 if (ae.value.trim()) {
                     lastSelection.text = ae.value;
                     lastSelection.element = { node: ae, start: 0, end: ae.value.length };
@@ -332,29 +434,65 @@ Retorne APENAS o texto corrigido.`,
                     return;
                 }
             }
-            // sem seleção válida — preserva o último estado para o botão ainda funcionar
         }
     }
 
     document.addEventListener('selectionchange', captureSelection, true);
-    document.addEventListener('mouseup', captureSelection, true);
-    document.addEventListener('keyup', captureSelection, true);
+    document.addEventListener('mouseup',         captureSelection, true);
+    document.addEventListener('keyup',           captureSelection, true);
+
+    // ============================================
+    // SUBSTITUIÇÃO DE TEXTO
+    // ============================================
+    function replaceSelection(newText) {
+        if (frozenSelection.element) {
+            const { node, start, end } = frozenSelection.element;
+            const newValue = node.value.substring(0, start) + newText + node.value.substring(end);
+
+            // Usa o setter nativo do React para que o estado interno seja atualizado
+            const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set
+                              || Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,    'value')?.set;
+            if (nativeSetter) {
+                nativeSetter.call(node, newValue);
+            } else {
+                node.value = newValue;
+            }
+
+            node.dispatchEvent(new Event('input',  { bubbles: true }));
+            node.dispatchEvent(new Event('change', { bubbles: true }));
+            try { node.focus(); node.setSelectionRange(start, start + newText.length); } catch (e) {}
+            return true;
+        }
+        if (frozenSelection.range) {
+            try {
+                const r = frozenSelection.range;
+                r.deleteContents();
+                r.insertNode(document.createTextNode(newText));
+                return true;
+            } catch (e) { return false; }
+        }
+        return false;
+    }
 
     // ============================================
     // LÓGICA DE API
     // ============================================
-    async function callAI(text, selectionData) {
+    function request(method, url, headers, data) {
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({ method, url, headers, data, onload: resolve, onerror: reject, ontimeout: reject });
+        });
+    }
+
+    async function callAI(text, onResult) {
         const provider = PROVIDERS[currentProvider];
         const key = apiKeys[currentProvider];
         const model = selectedModels[currentProvider];
 
         if (!key) {
-            alert(`Configure a chave de API para ${provider.name} nas abas de configurações.`);
+            toast('Configure sua chave de API primeiro.');
             openSettings();
             return;
         }
-
-        showLoading();
 
         try {
             let responseText = '';
@@ -362,326 +500,360 @@ Retorne APENAS o texto corrigido.`,
 
             if (currentProvider === 'gemini') {
                 const url = provider.apiUrl.replace('{model}', model) + `?key=${key}`;
-                const payload = {
-                    contents: [{ parts: [{ text: `${systemPrompt}\n\nTexto: ${text}` }] }],
-                    generationConfig: { temperature: 0.7 }
-                };
-
-                const res = await request('POST', url, { 'Content-Type': 'application/json' }, JSON.stringify(payload));
+                const payload = { contents: [{ parts: [{ text: `${systemPrompt}\n\nTexto: ${text}` }] }], generationConfig: { temperature: 0.7 } };
+                const res  = await request('POST', url, { 'Content-Type': 'application/json' }, JSON.stringify(payload));
                 const data = JSON.parse(res.responseText);
                 if (data.error) throw new Error(data.error.message);
                 responseText = data.candidates[0].content.parts[0].text;
             } else {
-                const payload = {
-                    model: model,
-                    messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
-                    temperature: 0.7
-                };
-
-                const res = await request('POST', provider.apiUrl, {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${key}`
-                }, JSON.stringify(payload));
-                
+                const payload = { model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }], temperature: 0.7 };
+                const res  = await request('POST', provider.apiUrl, { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` }, JSON.stringify(payload));
                 const data = JSON.parse(res.responseText);
                 if (data.error) throw new Error(data.error.message);
                 responseText = data.choices[0].message.content;
             }
 
-            hideLoading();
-            openResult(responseText.trim(), selectionData);
+            onResult(responseText.trim());
         } catch (err) {
-            hideLoading();
-            alert(`Erro no ${PROVIDERS[currentProvider].name}: ${err.message || 'Falha na conexão'}`);
+            toast(`Erro: ${err.message || 'Falha na conexão'}`);
+            throw err;
         }
     }
 
-    function request(method, url, headers, data) {
-        return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({ method, url, headers, data, onload: resolve, onerror: reject });
-        });
-    }
-
     // ============================================
-    // UI - MODAL DE CONFIGURAÇÕES (COM ABAS)
+    // DIFF
     // ============================================
-    function openSettings() {
-        let activeTab = 'groq';
-
-        const content = `
-            <div class="vp-tabs">
-                <div class="vp-tab active" data-tab="groq">GROQ</div>
-                <div class="vp-tab" data-tab="openai">OPENAI</div>
-                <div class="vp-tab" data-tab="gemini">GEMINI</div>
-            </div>
-            
-            <div id="vp-tab-content">
-                <!-- Conteúdo da aba injetado aqui -->
-            </div>
-
-            <hr style="border: 0; border-top: 1px solid var(--vp-border); margin: 1.5rem 0;">
-
-            <div class="vp-input-group">
-                <label class="vp-label">Provedor Ativo</label>
-                <select id="vp-set-active-provider" class="vp-select">
-                    <option value="groq" ${currentProvider === 'groq' ? 'selected' : ''}>Groq (Recomendado)</option>
-                    <option value="openai" ${currentProvider === 'openai' ? 'selected' : ''}>OpenAI</option>
-                    <option value="gemini" ${currentProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
-                </select>
-            </div>
-
-            <div class="vp-input-group">
-                <label class="vp-label">Modo de Processamento</label>
-                <select id="vp-set-mode" class="vp-select">
-                    ${Object.keys(MODES).map(m => `<option value="${m}" ${promptMode === m ? 'selected' : ''}>${m}</option>`).join('')}
-                </select>
-            </div>
-        `;
-
-        const footer = `
-            <button class="vp-btn vp-btn-secondary" id="vp-btn-close">Fechar</button>
-            <button class="vp-btn vp-btn-primary" id="vp-btn-save">Salvar Tudo</button>
-        `;
-
-        openModal('VERBA PRISM - CONFIGURAÇÕES', content, footer);
-
-        const renderTab = (tabId) => {
-            activeTab = tabId;
-            document.querySelectorAll('.vp-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
-            
-            const contentDiv = document.getElementById('vp-tab-content');
-            contentDiv.innerHTML = `
-                <div class="vp-input-group">
-                    <label class="vp-label">Chave de API (${PROVIDERS[tabId].name})</label>
-                    <input type="password" id="vp-tab-key" class="vp-input" value="${apiKeys[tabId] || ''}" placeholder="sk-...">
-                </div>
-                <div class="vp-input-group">
-                    <label class="vp-label">Modelo Customizado</label>
-                    <input type="text" id="vp-tab-model" class="vp-input" value="${selectedModels[tabId] || PROVIDERS[tabId].defaultModel}" placeholder="${PROVIDERS[tabId].defaultModel}">
-                </div>
-            `;
-
-            // Salvar temporariamente ao digitar para não perder ao trocar de aba
-            document.getElementById('vp-tab-key').oninput = (e) => apiKeys[activeTab] = e.target.value;
-            document.getElementById('vp-tab-model').oninput = (e) => selectedModels[activeTab] = e.target.value;
-        };
-
-        document.querySelectorAll('.vp-tab').forEach(tab => {
-            tab.onclick = () => renderTab(tab.dataset.tab);
-        });
-
-        renderTab('groq');
-
-        document.getElementById('vp-btn-close').onclick = closeModal;
-        document.getElementById('vp-btn-save').onclick = () => {
-            currentProvider = document.getElementById('vp-set-active-provider').value;
-            promptMode = document.getElementById('vp-set-mode').value;
-
-            GM_setValue('provider', currentProvider);
-            GM_setValue('apiKeys', apiKeys);
-            GM_setValue('selectedModels', selectedModels);
-            GM_setValue('promptMode', promptMode);
-
-            alert('Configurações salvas com sucesso!');
-            closeModal();
-        };
-    }
-
-    // ============================================
-    // MODAL DE RESULTADO E AUXILIARES
-    // ============================================
-    function openModal(title, contentHtml, footerHtml) {
-        if (activeModal) closeModal();
-        backdrop = document.createElement('div');
-        backdrop.className = 'vp-modal-backdrop';
-        const modal = document.createElement('div');
-        modal.className = 'vp-modal';
-        modal.innerHTML = `
-            <div class="vp-header"><h2>${title}</h2><button class="vp-btn vp-btn-secondary" style="padding: 0.4rem 0.6rem;" id="vp-close-x">✕</button></div>
-            <div class="vp-body">${contentHtml}</div>
-            <div class="vp-footer">${footerHtml}</div>
-        `;
-        backdrop.appendChild(modal);
-        document.body.appendChild(backdrop);
-        activeModal = backdrop;
-        document.getElementById('vp-close-x').onclick = closeModal;
-        backdrop.onclick = (e) => { if (e.target === backdrop) closeModal(); };
-    }
-
-    function closeModal() { if (activeModal) { activeModal.remove(); activeModal = null; } }
-
-    function openResult(result, selectionData) {
-        const content = `
-            <textarea id="vp-result-text" class="vp-textarea">${result}</textarea>
-            ${showDiffMode && selectionData.text ? `<div class="vp-diff-box">${generateDiff(selectionData.text, result)}</div>` : ''}
-        `;
-        const footer = `
-            <button class="vp-btn vp-btn-secondary" id="vp-res-copy">Copiar</button>
-            <button class="vp-btn vp-btn-primary" id="vp-res-replace">Substituir Texto</button>
-        `;
-        openModal('VERBA PRISM - RESULTADO', content, footer);
-        document.getElementById('vp-res-copy').onclick = () => {
-            const text = document.getElementById('vp-result-text').value;
-            const btn = document.getElementById('vp-res-copy');
-            const done = () => { btn.textContent = '✓ Copiado'; };
-            if (typeof GM_setClipboard !== 'undefined') {
-                GM_setClipboard(text); done();
-            } else {
-                navigator.clipboard.writeText(text).then(done).catch(() => {
-                    const ta = document.createElement('textarea');
-                    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-                    document.body.appendChild(ta); ta.select();
-                    document.execCommand('copy'); ta.remove(); done();
-                });
-            }
-        };
-        document.getElementById('vp-res-replace').onclick = () => {
-            const newText = document.getElementById('vp-result-text').value;
-            closeModal();
-            replaceText(selectionData, newText);
-        };
-    }
-
-    function showLoading() {
-        const div = document.createElement('div');
-        div.id = 'vp-loading';
-        div.className = 'vp-modal-backdrop';
-        div.innerHTML = `<div class="vp-modal" style="width: auto; padding: 2.5rem; align-items: center;">
-            <div style="width: 44px; height: 44px; border: 4px solid var(--vp-accent); border-top-color: transparent; border-radius: 50%; animation: vp-spin 0.8s linear infinite;"></div>
-            <p style="margin: 1.25rem 0 0; font-weight: 700; color: var(--vp-accent); letter-spacing: 0.1em;">PROCESSANDO...</p>
-        </div><style>@keyframes vp-spin { to { transform: rotate(360deg); } }</style>`;
-        document.body.appendChild(div);
-    }
-
-    function hideLoading() { const l = document.getElementById('vp-loading'); if (l) l.remove(); }
-
     function generateDiff(oldText, newText) {
         const oldWords = oldText.split(/\s+/);
         const newWords = newText.split(/\s+/);
         const m = oldWords.length, n = newWords.length;
-
-        // Constrói tabela LCS
         const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-        for (let i = 1; i <= m; i++) {
-            for (let j = 1; j <= n; j++) {
-                dp[i][j] = oldWords[i - 1] === newWords[j - 1]
-                    ? dp[i - 1][j - 1] + 1
-                    : Math.max(dp[i - 1][j], dp[i][j - 1]);
-            }
-        }
-
-        // Reconstrói lista de operações via LCS
+        for (let i = 1; i <= m; i++)
+            for (let j = 1; j <= n; j++)
+                dp[i][j] = oldWords[i-1] === newWords[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
         const ops = [];
         let i = m, j = n;
         while (i > 0 || j > 0) {
-            if (i > 0 && j > 0 && oldWords[i - 1] === newWords[j - 1]) {
-                ops.unshift({ type: 'eq', word: oldWords[i - 1] }); i--; j--;
-            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-                ops.unshift({ type: 'add', word: newWords[j - 1] }); j--;
-            } else {
-                ops.unshift({ type: 'rem', word: oldWords[i - 1] }); i--;
-            }
+            if (i > 0 && j > 0 && oldWords[i-1] === newWords[j-1]) { ops.unshift({ type: 'eq',  word: oldWords[i-1] }); i--; j--; }
+            else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) { ops.unshift({ type: 'add', word: newWords[j-1] }); j--; }
+            else { ops.unshift({ type: 'rem', word: oldWords[i-1] }); i--; }
         }
-
-        // Duas linhas: original (vermelho) e novo (verde)
-        // Palavras iguais aparecem nas duas linhas sem marcação
         let oldLine = '', newLine = '';
         for (const op of ops) {
-            if (op.type === 'eq') {
-                oldLine += op.word + ' ';
-                newLine += op.word + ' ';
-            } else if (op.type === 'rem') {
-                oldLine += `<span class="vp-removed">${op.word}</span> `;
-            } else {
-                newLine += `<span class="vp-added">${op.word}</span> `;
-            }
+            if      (op.type === 'eq')  { oldLine += op.word + ' '; newLine += op.word + ' '; }
+            else if (op.type === 'rem') { oldLine += `<span class="vp-removed">${op.word}</span> `; }
+            else                        { newLine += `<span class="vp-added">${op.word}</span> `; }
         }
-
-        return `<div class="vp-diff-line">${oldLine.trimEnd()}</div>`
-             + `<div class="vp-diff-line">${newLine.trimEnd()}</div>`;
+        return `<div class="vp-diff-line">${oldLine.trimEnd()}</div><div class="vp-diff-line">${newLine.trimEnd()}</div>`;
     }
 
-    function replaceText(data, newText) {
-        if (data.element) {
-            const { node, start, end } = data.element;
-            node.value = node.value.substring(0, start) + newText + node.value.substring(end);
-            node.dispatchEvent(new Event('input', { bubbles: true }));
-            node.dispatchEvent(new Event('change', { bubbles: true }));
-            try { node.focus(); node.setSelectionRange(start, start + newText.length); } catch (e) {}
-        } else if (data.range) {
+    // ============================================
+    // MODAL DE RESULTADO
+    // ============================================
+    function openResult(originalText, resultText) {
+        // Congela o alvo de substituição antes de o modal roubar o foco
+        frozenSelection = {
+            text:    lastSelection.text,
+            range:   lastSelection.range,
+            element: lastSelection.element,
+        };
+        injectStyles();
+        closeOverlay();
+
+        const modeKeys = Object.keys(MODES);
+        const tabs = el('div', { class: 'vp-tabs' });
+        const tabEls = {};
+        let activeMode = promptMode;
+
+        modeKeys.forEach(m => {
+            const t = el('div', { class: 'vp-tab' + (m === activeMode ? ' active' : '') }, m);
+            t.addEventListener('click', () => {
+                activeMode = m;
+                promptMode = m;
+                Object.values(tabEls).forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+            });
+            tabEls[m] = t;
+            tabs.appendChild(t);
+        });
+
+        const inputArea  = el('textarea', { class: 'vp-textarea',         placeholder: 'Texto original…' });
+        const resultArea = el('textarea', { class: 'vp-textarea result',  placeholder: 'Resultado aparecerá aqui…', readonly: 'true' });
+        inputArea.value  = originalText || '';
+        resultArea.value = resultText   || '';
+
+        const diffBox = el('div', { class: 'vp-diff-box' });
+        diffBox.style.display = 'none';
+        if (originalText && resultText) {
+            diffBox.innerHTML = generateDiff(originalText, resultText);
+            diffBox.style.display = 'block';
+        }
+
+        const processBtn = el('button', { class: 'vp-btn primary' }, 'Processar');
+        const copyBtn    = el('button', { class: 'vp-btn' }, 'Copiar');
+        const replaceBtn = el('button', { class: 'vp-btn' }, 'Substituir na página');
+        const settingsBtn = el('button', { class: 'vp-btn', onclick: openSettings }, '⚙ Configurações');
+
+        copyBtn.disabled    = !resultText;
+        replaceBtn.disabled = !resultText;
+
+        processBtn.addEventListener('click', async () => {
+            const text = inputArea.value.trim();
+            if (!text) return toast('Digite ou selecione um texto.');
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<span class="vp-loader"></span> Processando…';
+            resultArea.value = '';
+            diffBox.style.display = 'none';
             try {
-                const r = data.range;
-                r.deleteContents();
-                r.insertNode(document.createTextNode(newText));
-            } catch (e) {}
+                await callAI(text, out => {
+                    resultArea.value = out;
+                    copyBtn.disabled    = false;
+                    replaceBtn.disabled = false;
+                    if (text) {
+                        diffBox.innerHTML = generateDiff(text, out);
+                        diffBox.style.display = 'block';
+                    }
+                });
+            } catch (e) { /* toast já exibido */ } finally {
+                processBtn.disabled = false;
+                processBtn.textContent = 'Processar';
+            }
+        });
+
+        copyBtn.addEventListener('click', () => {
+            const v = resultArea.value;
+            if (!v) return;
+            try { GM_setClipboard(v); } catch (e) { navigator.clipboard?.writeText(v); }
+            toast('Copiado ✓');
+        });
+
+        replaceBtn.addEventListener('click', () => {
+            const v = resultArea.value;
+            if (!v) return;
+            const ok = replaceSelection(v);
+            if (ok) { toast('Texto substituído ✓'); closeOverlay(); }
+            else    { toast('Não foi possível substituir. Use Copiar.'); }
+        });
+
+        const modal = el('div', { class: 'vp-modal' });
+        modal.append(
+            makeHeader(`${currentProvider} · ${selectedModels[currentProvider]}`),
+            el('div', { class: 'vp-body' },
+                tabs,
+                el('div', { class: 'vp-label', style: 'margin-bottom:6px;' }, 'Texto original'),
+                inputArea,
+                el('div', { class: 'vp-label', style: 'margin:14px 0 6px;' }, 'Resultado'),
+                resultArea,
+                diffBox,
+            ),
+            el('div', { class: 'vp-actions' },
+                settingsBtn,
+                el('div', { class: 'vp-spacer' }),
+                copyBtn,
+                replaceBtn,
+                processBtn,
+            ),
+        );
+        makeOverlay(modal);
+
+        if (inputArea.value.trim() && !resultText) {
+            setTimeout(() => processBtn.click(), 150);
         }
     }
 
-    function getSelectionData() {
-        if (lastSelection.text) return lastSelection;
-        return null;
+    // ============================================
+    // MODAL DE CONFIGURAÇÕES
+    // ============================================
+    function openSettings() {
+        injectStyles();
+        closeOverlay();
+
+        let activeTab = currentProvider;
+
+        // --- Abas de provedor ---
+        const providerTabsEl = el('div', { class: 'vp-provider-tabs' });
+        const providerTabEls = {};
+        const tabContents = {};
+
+        ['groq', 'openai', 'gemini'].forEach(p => {
+            const t = el('div', { class: 'vp-provider-tab' + (p === activeTab ? ' active' : '') }, PROVIDERS[p].name);
+            t.addEventListener('click', () => {
+                activeTab = p;
+                Object.values(providerTabEls).forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                Object.values(tabContents).forEach(x => x.style.display = 'none');
+                tabContents[p].style.display = 'block';
+            });
+            providerTabEls[p] = t;
+            providerTabsEl.appendChild(t);
+        });
+
+        // Conteúdo de cada aba de provedor
+        const modelLists = { groq: GROQ_MODELS, openai: OPENAI_MODELS, gemini: GEMINI_MODELS };
+
+        ['groq', 'openai', 'gemini'].forEach(p => {
+            const keyInput = el('input', { class: 'vp-input', type: 'password', placeholder: 'Chave de API…', value: apiKeys[p] || '' });
+            keyInput.addEventListener('input', e => { apiKeys[p] = e.target.value; });
+
+            const modelInput = el('input', { class: 'vp-input', type: 'text', placeholder: PROVIDERS[p].defaultModel, value: selectedModels[p] || PROVIDERS[p].defaultModel });
+            modelInput.addEventListener('input', e => { selectedModels[p] = e.target.value; });
+
+            const modelList = el('select', { class: 'vp-select', style: 'margin-top:6px;' });
+            modelLists[p].forEach(m => {
+                const o = el('option', { value: m }, m);
+                if (m === (selectedModels[p] || PROVIDERS[p].defaultModel)) o.selected = true;
+                modelList.appendChild(o);
+            });
+            el('option', { value: '' }, 'Personalizado…');
+            modelList.addEventListener('change', e => {
+                if (e.target.value) { modelInput.value = e.target.value; selectedModels[p] = e.target.value; }
+            });
+
+            const div = el('div', {},
+                el('div', { class: 'vp-field', style: 'margin-bottom:12px;' },
+                    el('div', { class: 'vp-label' }, 'Chave de API'),
+                    keyInput,
+                ),
+                el('div', { class: 'vp-field' },
+                    el('div', { class: 'vp-label' }, 'Modelo'),
+                    modelList,
+                    modelInput,
+                ),
+            );
+            div.style.display = p === activeTab ? 'block' : 'none';
+            tabContents[p] = div;
+        });
+
+        // Provedor ativo
+        const activeSel = el('select', { class: 'vp-select' });
+        ['groq', 'openai', 'gemini'].forEach(p => {
+            const o = el('option', { value: p }, PROVIDERS[p].name + (p === 'groq' ? ' (Recomendado)' : ''));
+            if (p === currentProvider) o.selected = true;
+            activeSel.appendChild(o);
+        });
+
+        // Modo padrão
+        const modeSel = el('select', { class: 'vp-select' });
+        Object.keys(MODES).forEach(m => {
+            const o = el('option', { value: m }, m);
+            if (m === promptMode) o.selected = true;
+            modeSel.appendChild(o);
+        });
+
+        const modal = el('div', { class: 'vp-modal' });
+        modal.append(
+            makeHeader('Configurações'),
+            el('div', { class: 'vp-body' },
+                providerTabsEl,
+                tabContents['groq'],
+                tabContents['openai'],
+                tabContents['gemini'],
+                el('hr', { class: 'vp-sep' }),
+                el('div', { class: 'vp-row' },
+                    el('div', { class: 'vp-field' },
+                        el('div', { class: 'vp-label' }, 'Provedor ativo'),
+                        activeSel,
+                    ),
+                    el('div', { class: 'vp-field' },
+                        el('div', { class: 'vp-label' }, 'Modo padrão'),
+                        modeSel,
+                    ),
+                ),
+                el('div', { style: 'margin-top:12px; font-size:12px; color:var(--vp-muted); line-height:1.5;' },
+                    'Chave Groq gratuita em ', el('b', {}, 'console.groq.com/keys'), '. Configurações salvas localmente pelo Tampermonkey.',
+                ),
+            ),
+            el('div', { class: 'vp-actions' },
+                el('div', { class: 'vp-spacer' }),
+                el('button', { class: 'vp-btn', onclick: closeOverlay }, 'Cancelar'),
+                el('button', { class: 'vp-btn primary', onclick: () => {
+                    currentProvider = activeSel.value;
+                    promptMode      = modeSel.value;
+                    GM_setValue('provider',       currentProvider);
+                    GM_setValue('apiKeys',        apiKeys);
+                    GM_setValue('selectedModels', selectedModels);
+                    GM_setValue('promptMode',     promptMode);
+                    closeOverlay();
+                    toast('Configurações salvas ✓');
+                } }, 'Salvar'),
+            ),
+        );
+        makeOverlay(modal);
     }
 
     // ============================================
-    // INICIALIZAÇÃO
+    // FAB — posicionado sobre a seleção
     // ============================================
-    function positionFab() {
-        if (!floatingBtn) return;
-        const sel = window.getSelection();
+    let fab = null;
 
-        // Seleção de texto livre
+    function ensureFab() {
+        if (fab) return fab;
+        injectStyles();
+        fab = document.createElement('div');
+        fab.className = 'vp-fab';
+        fab.title = 'Verba Prism — aprimorar texto selecionado';
+        fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L15 9 L22 12 L15 15 L12 22 L9 15 L2 12 L9 9 Z"/></svg>`;
+        fab.style.display = 'none';
+        fab.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); });
+        fab.addEventListener('click', e => {
+            e.preventDefault(); e.stopPropagation();
+            const text = lastSelection.text || window.getSelection()?.toString() || '';
+            fab.style.display = 'none';
+            openResult(text, '');
+        });
+        document.body.appendChild(fab);
+        return fab;
+    }
+
+    function positionFab() {
+        const sel = window.getSelection();
         if (sel && !sel.isCollapsed && sel.toString().trim()) {
             try {
                 const r = sel.getRangeAt(0).getBoundingClientRect();
-                if (r.width === 0 && r.height === 0) { floatingBtn.style.display = 'none'; return; }
-                floatingBtn.style.display = 'flex';
-                floatingBtn.style.top  = `${window.scrollY + r.top - 62}px`;
-                floatingBtn.style.left = `${window.scrollX + r.right - 27}px`;
+                if (r.width === 0 && r.height === 0) { if (fab) fab.style.display = 'none'; return; }
+                const f = ensureFab();
+                f.style.display = 'flex';
+                f.style.top  = `${window.scrollY + r.top - 52}px`;
+                f.style.left = `${window.scrollX + r.right - 22}px`;
                 return;
             } catch (e) {}
         }
-
-        // Seleção parcial em input/textarea
         const ae = document.activeElement;
-        if (ae && !ae.closest('.vp-modal') &&
+        if (ae && !ae.closest('.vp-overlay') &&
             (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /text|search|url|email/i.test(ae.type || 'text'))) &&
             ae.selectionStart !== ae.selectionEnd) {
             const rect = ae.getBoundingClientRect();
-            floatingBtn.style.display = 'flex';
-            floatingBtn.style.top  = `${window.scrollY + rect.top - 62}px`;
-            floatingBtn.style.left = `${window.scrollX + rect.right - 54}px`;
+            const f = ensureFab();
+            f.style.display = 'flex';
+            f.style.top  = `${window.scrollY + rect.top - 52}px`;
+            f.style.left = `${window.scrollX + rect.right - 44}px`;
             return;
         }
-
-        floatingBtn.style.display = 'none';
+        if (fab) fab.style.display = 'none';
     }
 
-    function init() {
-        injectStyles();
-        floatingBtn = document.createElement('button');
-        floatingBtn.className = 'vp-floating-btn';
-        floatingBtn.innerHTML = '✨';
-        floatingBtn.style.display = 'none';
-        document.body.appendChild(floatingBtn);
+    document.addEventListener('mouseup',   () => setTimeout(positionFab, 10), true);
+    document.addEventListener('keyup',     () => setTimeout(positionFab, 10), true);
+    document.addEventListener('scroll',    () => { if (fab) fab.style.display = 'none'; }, true);
+    document.addEventListener('mousedown', e => { if (fab && !fab.contains(e.target)) fab.style.display = 'none'; }, true);
 
-        floatingBtn.addEventListener('mousedown', (e) => { e.preventDefault(); });
-        floatingBtn.onclick = () => {
-            const data = getSelectionData();
-            if (data) callAI(data.text, data);
-            else alert('Selecione um texto ou clique em um campo preenchido.');
-        };
+    // ============================================
+    // ATALHO DE TECLADO: Ctrl+Shift+L
+    // ============================================
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'L' || e.key === 'l')) {
+            e.preventDefault();
+            const text = lastSelection.text || window.getSelection()?.toString() || '';
+            openResult(text, '');
+        }
+    }, true);
 
-        document.addEventListener('mouseup',  () => setTimeout(positionFab, 10), true);
-        document.addEventListener('keyup',    () => setTimeout(positionFab, 10), true);
-        document.addEventListener('scroll',   () => { if (floatingBtn) floatingBtn.style.display = 'none'; }, true);
-        document.addEventListener('mousedown', (e) => {
-            if (floatingBtn && !floatingBtn.contains(e.target) && !e.target.closest('.vp-modal')) {
-                floatingBtn.style.display = 'none';
-            }
-        }, true);
+    // ============================================
+    // MENU TAMPERMONKEY
+    // ============================================
+    try {
+        GM_registerMenuCommand('Verba Prism — Abrir editor',   () => openResult(lastSelection.text || '', ''));
+        GM_registerMenuCommand('Verba Prism — Configurações',  openSettings);
+    } catch (e) {}
 
-        GM_registerMenuCommand('⚙️ Configurações', openSettings);
-    }
-
-    init();
 })();
