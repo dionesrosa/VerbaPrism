@@ -583,20 +583,25 @@ Retorne APENAS o texto corrigido.`,
     }
 
     function getSelectionData() {
-        // Prioridade 1: input/textarea com seleção salva continuamente
-        if (lastFocusedField) {
+        // Caso 1: há um input/textarea com foco registrado
+        if (lastFocusedField && !lastFocusedField.closest('.vp-modal')) {
             const el = lastFocusedField;
-            const start = el._vpStart ?? 0;
-            const end   = el._vpEnd   ?? el.value.length;
-            const text  = el.value.slice(start, end) || el.value;
-            const s = text === el.value ? 0 : start;
-            const e = text === el.value ? el.value.length : end;
-            if (el.value) return { source: 'input', element: el, text, start: s, end: e };
+            // Usa posições salvas no mousedown (antes do blur), com fallback para as atuais
+            const start = el._vpStart ?? el.selectionStart;
+            const end   = el._vpEnd   ?? el.selectionEnd;
+            if (start !== end) {
+                return { source: 'input', element: el, text: el.value.slice(start, end), start, end };
+            }
+            if (el.value.trim()) {
+                return { source: 'input', element: el, text: el.value, start: 0, end: el.value.length };
+            }
         }
-        // Prioridade 2: seleção de texto livre (range)
+        // Caso 2: seleção de texto livre em qualquer elemento da página
         const sel = window.getSelection();
         const text = sel.toString().trim();
-        if (text && sel.rangeCount) return { source: 'range', range: sel.getRangeAt(0).cloneRange(), text };
+        if (text && sel.rangeCount) {
+            return { source: 'range', range: sel.getRangeAt(0).cloneRange(), text };
+        }
         return null;
     }
 
@@ -610,6 +615,13 @@ Retorne APENAS o texto corrigido.`,
         floatingBtn.innerHTML = '✨';
         floatingBtn.style.display = 'none';
         document.body.appendChild(floatingBtn);
+        floatingBtn.addEventListener('mousedown', () => {
+            // Captura posições ANTES do clique tirar o foco do campo
+            if (lastFocusedField && !lastFocusedField.closest('.vp-modal')) {
+                lastFocusedField._vpStart = lastFocusedField.selectionStart;
+                lastFocusedField._vpEnd   = lastFocusedField.selectionEnd;
+            }
+        });
         floatingBtn.onclick = () => {
             const data = getSelectionData();
             if (data) callAI(data.text, data);
@@ -622,18 +634,6 @@ Retorne APENAS o texto corrigido.`,
                 floatingBtn.style.display = 'flex';
             }
         });
-
-        // Salva posição da seleção no campo ativo a cada interação
-        const saveSelection = (e) => {
-            const el = e.target;
-            if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')
-                && !el.closest('.vp-modal')) {
-                el._vpStart = el.selectionStart;
-                el._vpEnd   = el.selectionEnd;
-            }
-        };
-        document.addEventListener('mouseup', saveSelection);
-        document.addEventListener('keyup',   saveSelection);
         document.addEventListener('mousedown', (e) => {
             if (!e.target.closest('.vp-floating-btn') && !e.target.closest('.vp-modal')) {
                 setTimeout(() => { if (!window.getSelection().toString()) {
