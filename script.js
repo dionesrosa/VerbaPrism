@@ -458,7 +458,31 @@ Retorne APENAS o texto corrigido.`,
     // ============================================
     function replaceSelection(newText) {
         if (frozenSelection.element) {
-            const { node, start, end } = frozenSelection.element;
+            const { node, contenteditable } = frozenSelection.element;
+
+            // contenteditable (ex: character.ai, Google Docs)
+            if (contenteditable) {
+                node.focus();
+                const range = document.createRange();
+                range.selectNodeContents(node);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                sel.deleteFromDocument();
+                // Insere o texto como nó de texto dentro do elemento
+                const textNode = document.createTextNode(newText);
+                range.insertNode(textNode);
+                // Move o cursor para o final
+                range.setStartAfter(textNode);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+                node.dispatchEvent(new Event('input', { bubbles: true }));
+                return true;
+            }
+
+            // textarea / input nativo
+            const { start, end } = frozenSelection.element;
             const newValue = node.value.substring(0, start) + newText + node.value.substring(end);
 
             // Usa o setter nativo do React para que o estado interno seja atualizado
