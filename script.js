@@ -1,16 +1,22 @@
 // ==UserScript==
-// @name         Verba Prism v3.1 (Tabs & Modes)
-// @namespace    http://tampermonkey.net/
+// @name         Verba Prism
+// @namespace    https://github.com/dionesrosa
 // @version      0.5.0
 // @description  Aprimora texto com abas para chaves de API, seletor de provedor ativo e modos de processamento expandidos.
-// @author       Diones Souza (Melhorias: Manus AI)
+// @author       Diones Souza
+// @license      MIT
 // @icon         https://cdn-icons-png.magnific.com/64/9708/9708616.png
+// @homepageURL  https://github.com/dionesrosa/VerbaPrism
+// @supportURL   https://github.com/dionesrosa/VerbaPrism/issues
+// @updateURL    https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
+// @downloadURL  https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
 // @match        *://*/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_setClipboard
+// @connect      localhost
 // @connect      api.groq.com
 // @connect      api.openai.com
 // @connect      generativelanguage.googleapis.com
@@ -181,7 +187,9 @@ Retorne APENAS o texto corrigido.`,
     let backdrop = null;
     let activeModal = null;
     let floatingBtn = null;
-    let lastFocusedField = null;
+
+    // Captura de seleção — atualizada continuamente
+    let lastSelection = { text: '', range: null, element: null };
 
     // ============================================
     // ESTILOS (UI COM ABAS)
@@ -262,11 +270,11 @@ Retorne APENAS o texto corrigido.`,
             .vp-textarea { min-height: 140px; max-height: 280px; resize: vertical; line-height: 1.6; font-family: inherit; }
 
             .vp-floating-btn {
-                position: fixed; right: 24px; bottom: 24px; width: 54px; height: 54px;
+                position: fixed; width: 54px; height: 54px;
                 background: var(--vp-accent); color: white; border-radius: 50%;
                 display: flex; align-items: center; justify-content: center; cursor: pointer;
                 box-shadow: 0 10px 25px -5px rgba(237,0,83,0.4); z-index: ${MODAL_Z_INDEX - 1};
-                transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); border: 2px solid rgba(255,255,255,0.1);
+                transition: transform 0.2s, box-shadow 0.2s; border: 2px solid rgba(255,255,255,0.1);
                 font-size: 1.6rem;
             }
 
@@ -295,6 +303,42 @@ Retorne APENAS o texto corrigido.`,
         style.textContent = css;
         document.head.appendChild(style);
     }
+
+    // ============================================
+    // CAPTURA DE SELEÇÃO (contínua)
+    // ============================================
+    function captureSelection() {
+        const sel = window.getSelection();
+        if (sel && sel.toString().trim().length > 0) {
+            lastSelection.text = sel.toString();
+            try { lastSelection.range = sel.getRangeAt(0).cloneRange(); } catch (e) { lastSelection.range = null; }
+            lastSelection.element = null;
+        } else {
+            const ae = document.activeElement;
+            if (ae && !ae.closest('.vp-modal') &&
+                (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /text|search|url|email/i.test(ae.type || 'text')))) {
+                const start = ae.selectionStart, end = ae.selectionEnd;
+                if (start !== end) {
+                    lastSelection.text = ae.value.substring(start, end);
+                    lastSelection.element = { node: ae, start, end };
+                    lastSelection.range = null;
+                    return;
+                }
+                // campo inteiro se não houver seleção parcial
+                if (ae.value.trim()) {
+                    lastSelection.text = ae.value;
+                    lastSelection.element = { node: ae, start: 0, end: ae.value.length };
+                    lastSelection.range = null;
+                    return;
+                }
+            }
+            // sem seleção válida — preserva o último estado para o botão ainda funcionar
+        }
+    }
+
+    document.addEventListener('selectionchange', captureSelection, true);
+    document.addEventListener('mouseup', captureSelection, true);
+    document.addEventListener('keyup', captureSelection, true);
 
     // ============================================
     // LÓGICA DE API
@@ -558,56 +602,60 @@ Retorne APENAS o texto corrigido.`,
     }
 
     function replaceText(data, newText) {
-        if (data.source === 'input' && data.element) {
-            const el = data.element;
-            el.focus();
-            const val = el.value;
-            el.value = val.slice(0, data.start) + newText + val.slice(data.end);
-            el.selectionStart = data.start;
-            el.selectionEnd = data.start + newText.length;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-        } else if (data.source === 'range' && data.range) {
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(data.range);
-            // execCommand preserva o undo nativo e funciona em contenteditable
-            const ok = document.execCommand('insertText', false, newText);
-            if (!ok) {
-                // fallback direto para elementos que aceitam mutação
-                data.range.deleteContents();
-                data.range.insertNode(document.createTextNode(newText));
-                sel.removeAllRanges();
-            }
+        if (data.element) {
+            const { node, start, end } = data.element;
+            node.value = node.value.substring(0, start) + newText + node.value.substring(end);
+            node.dispatchEvent(new Event('input', { bubbles: true }));
+            node.dispatchEvent(new Event('change', { bubbles: true }));
+            try { node.focus(); node.setSelectionRange(start, start + newText.length); } catch (e) {}
+        } else if (data.range) {
+            try {
+                const r = data.range;
+                r.deleteContents();
+                r.insertNode(document.createTextNode(newText));
+            } catch (e) {}
         }
     }
 
     function getSelectionData() {
-        // Caso 1: há um input/textarea com foco registrado
-        if (lastFocusedField && !lastFocusedField.closest('.vp-modal')) {
-            const el = lastFocusedField;
-            // Usa posições salvas no mousedown (antes do blur), com fallback para as atuais
-            const start = el._vpStart ?? el.selectionStart;
-            const end   = el._vpEnd   ?? el.selectionEnd;
-            if (start !== end) {
-                return { source: 'input', element: el, text: el.value.slice(start, end), start, end };
-            }
-            if (el.value.trim()) {
-                return { source: 'input', element: el, text: el.value, start: 0, end: el.value.length };
-            }
-        }
-        // Caso 2: seleção de texto livre em qualquer elemento da página
-        const sel = window.getSelection();
-        const text = sel.toString().trim();
-        if (text && sel.rangeCount) {
-            return { source: 'range', range: sel.getRangeAt(0).cloneRange(), text };
-        }
+        if (lastSelection.text) return lastSelection;
         return null;
     }
 
     // ============================================
     // INICIALIZAÇÃO
     // ============================================
+    function positionFab() {
+        if (!floatingBtn) return;
+        const sel = window.getSelection();
+
+        // Seleção de texto livre
+        if (sel && !sel.isCollapsed && sel.toString().trim()) {
+            try {
+                const r = sel.getRangeAt(0).getBoundingClientRect();
+                if (r.width === 0 && r.height === 0) { floatingBtn.style.display = 'none'; return; }
+                floatingBtn.style.display = 'flex';
+                floatingBtn.style.top  = `${window.scrollY + r.top - 62}px`;
+                floatingBtn.style.left = `${window.scrollX + r.right - 27}px`;
+                return;
+            } catch (e) {}
+        }
+
+        // Seleção parcial em input/textarea
+        const ae = document.activeElement;
+        if (ae && !ae.closest('.vp-modal') &&
+            (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /text|search|url|email/i.test(ae.type || 'text'))) &&
+            ae.selectionStart !== ae.selectionEnd) {
+            const rect = ae.getBoundingClientRect();
+            floatingBtn.style.display = 'flex';
+            floatingBtn.style.top  = `${window.scrollY + rect.top - 62}px`;
+            floatingBtn.style.left = `${window.scrollX + rect.right - 54}px`;
+            return;
+        }
+
+        floatingBtn.style.display = 'none';
+    }
+
     function init() {
         injectStyles();
         floatingBtn = document.createElement('button');
@@ -615,32 +663,23 @@ Retorne APENAS o texto corrigido.`,
         floatingBtn.innerHTML = '✨';
         floatingBtn.style.display = 'none';
         document.body.appendChild(floatingBtn);
-        floatingBtn.addEventListener('mousedown', () => {
-            // Captura posições ANTES do clique tirar o foco do campo
-            if (lastFocusedField && !lastFocusedField.closest('.vp-modal')) {
-                lastFocusedField._vpStart = lastFocusedField.selectionStart;
-                lastFocusedField._vpEnd   = lastFocusedField.selectionEnd;
-            }
-        });
+
+        floatingBtn.addEventListener('mousedown', (e) => { e.preventDefault(); });
         floatingBtn.onclick = () => {
             const data = getSelectionData();
             if (data) callAI(data.text, data);
             else alert('Selecione um texto ou clique em um campo preenchido.');
         };
-        document.addEventListener('focusin', (e) => {
-            if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')
-                && !e.target.closest('.vp-modal')) {
-                lastFocusedField = e.target;
-                floatingBtn.style.display = 'flex';
-            }
-        });
+
+        document.addEventListener('mouseup',  () => setTimeout(positionFab, 10), true);
+        document.addEventListener('keyup',    () => setTimeout(positionFab, 10), true);
+        document.addEventListener('scroll',   () => { if (floatingBtn) floatingBtn.style.display = 'none'; }, true);
         document.addEventListener('mousedown', (e) => {
-            if (!e.target.closest('.vp-floating-btn') && !e.target.closest('.vp-modal')) {
-                setTimeout(() => { if (!window.getSelection().toString()) {
-                    if (!document.activeElement || (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) floatingBtn.style.display = 'none';
-                } }, 100);
+            if (floatingBtn && !floatingBtn.contains(e.target) && !e.target.closest('.vp-modal')) {
+                floatingBtn.style.display = 'none';
             }
-        });
+        }, true);
+
         GM_registerMenuCommand('⚙️ Configurações', openSettings);
     }
 
