@@ -1,37 +1,40 @@
-# GUIA - Estado Atual e Próximos Passos
+# GUIA — Verba Prism
 
 ## O que foi feito
 
 ### Sessão atual
-- Revisado o `PROJETO.md` comparando o roadmap com o código implementado em `script.js` (v0.5.0).
-- Marcadas as funcionalidades já concluídas no roadmap (seção 4):
-  - **Tradução Integrada** (`[x]`): modo "Traduzir (EN)" presente em `MODES` (script.js:46); múltiplos idiomas ainda pendentes.
-  - **Resumo de Texto** (`[x]`): modo "Resumir" presente em `MODES` (script.js:47).
-  - **Atalhos de Teclado básico** (`[x]`): `Alt+V` e `Escape` documentados na v2 (seção 2.1).
-  - **Notificações básicas** (`[x]`): feedback visual "✓ Copiado" implementado (script.js:351); notificações nativas do navegador ainda pendentes.
-- Diff avançado: existe implementação básica por palavra (`generateDiff`, script.js:372), mas comparação por caractere, lado-a-lado e histórico de versões ainda estão pendentes — mantido como `[ ]` com observação.
 
-## Estado do Projeto
+**fix: corrigir substituição de texto na textarea usando frozenSelection**
 
-- Versão atual: **v0.5.0** (Verba Prism v3.1 - Tabs & Modes)
-- Provedores suportados: Groq, OpenAI, Google Gemini
-- Modos de processamento: Aprimorar, Formal, Conciso, Criativo, Roleplay, Traduzir (EN), Resumir, Corrigir
+- Identificado o bug raiz: ao abrir o modal, o foco mudava para os elementos do overlay, disparando `captureSelection` e zerando `lastSelection.element`. Com isso, `replaceSelection` caía no bloco `range` e inseria o texto acima da textarea em vez de substituir o valor dela.
+- Adicionada a variável `frozenSelection` que congela um snapshot de `lastSelection` no exato momento em que `openResult` é chamado (antes de o modal roubar o foco).
+- `replaceSelection` agora consulta `frozenSelection` em vez de `lastSelection`, garantindo que o alvo de substituição seja sempre o campo original.
+- Mantido o setter nativo de `HTMLTextAreaElement.prototype` para compatibilidade com React e outros frameworks que ignoram atribuição direta de `node.value`.
 
-## Próximos Passos (baseados no PROJETO.md)
+---
 
-### Fase 1 — Curto Prazo (prioritário)
-- [ ] **Gerenciador de Histórico**: interface para visualizar, pesquisar, exportar (JSON/CSV) e recuperar textos processados.
-- [ ] **Mais Atalhos de Teclado**: expandir para abrir histórico, alternar tema e copiar último resultado.
-- [ ] **Tema Claro Completo**: paleta `light mode` para melhor acessibilidade.
-- [ ] **Notificações de Sistema**: notificações nativas do navegador para eventos importantes.
+## Próximos passos (baseados em PROJETO.md)
+
+### Fase 1 — Curto Prazo
+- [ ] Gerenciador de Histórico (visualizar, pesquisar, exportar JSON/CSV)
+- [ ] Mais atalhos de teclado (histórico, alternar tema, copiar último resultado)
+- [ ] Tema claro completo (paleta apropriada, acessibilidade)
+- [ ] Notificações nativas do navegador
 
 ### Fase 2 — Médio Prazo
-- [ ] **Custom Prompts**: usuário cria e salva modos de revisão personalizados.
-- [ ] **Ajuste de Tom (Tone Slider)**: sliders de profissionalismo, entusiasmo e criatividade.
-- [ ] **Estatísticas de Uso**: métricas de textos processados, modo e provedor mais usados.
+- [ ] Custom Prompts (modos de revisão personalizados pelo usuário)
+- [ ] Ajuste de Tom (sliders de profissionalismo, entusiasmo, criatividade)
+- [ ] Estatísticas de uso (textos processados, modo mais usado, tempo médio)
 
 ### Fase 3 — Longo Prazo
-- [ ] **Tradução para múltiplos idiomas**: Espanhol, Francês, Alemão, Japonês.
-- [ ] **Integração com Google Docs**.
-- [ ] **Sincronização via Cloud** (Firebase ou servidor próprio).
-- [ ] **Diff Avançado**: comparação por caractere, visualização lado-a-lado, histórico de versões.
+- [ ] Diff avançado (por caractere, lado a lado, histórico de versões, desfazer/refazer)
+- [ ] Integração com Google Docs
+- [ ] Sincronização de configurações via Cloud
+
+---
+
+## Observações técnicas
+
+- O script é um userscript Tampermonkey — verificação de runtime só é possível carregando no navegador; não há suite de testes automatizados.
+- O padrão `frozenSelection` deve ser replicado em qualquer futuro ponto de entrada que abra o modal (menu Tampermonkey, atalhos de teclado adicionais, etc.).
+- O aviso de LF→CRLF do Git é inofensivo; o arquivo funciona normalmente no Tampermonkey.
