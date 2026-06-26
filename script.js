@@ -418,8 +418,9 @@ Retorne APENAS o texto corrigido.`,
             lastSelection.element = null;
         } else {
             const ae = document.activeElement;
-            if (ae && !ae.closest('.vp-overlay') &&
-                (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /text|search|url|email/i.test(ae.type || 'text')))) {
+            if (!ae || ae.closest('.vp-overlay')) return;
+            // Textarea / input nativo
+            if (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /^(text|search|url|email|password|tel|number)$/i.test(ae.type || 'text'))) {
                 const start = ae.selectionStart, end = ae.selectionEnd;
                 if (start !== end) {
                     lastSelection.text = ae.value.substring(start, end);
@@ -434,12 +435,23 @@ Retorne APENAS o texto corrigido.`,
                     return;
                 }
             }
+            // contenteditable
+            if (ae.isContentEditable || ae.getAttribute('contenteditable') !== null) {
+                const text = ae.innerText.trim();
+                if (text) {
+                    lastSelection.text = text;
+                    lastSelection.element = { node: ae, start: 0, end: text.length, contenteditable: true };
+                    lastSelection.range = null;
+                    return;
+                }
+            }
         }
     }
 
     document.addEventListener('selectionchange', captureSelection, true);
     document.addEventListener('mouseup',         captureSelection, true);
     document.addEventListener('keyup',           captureSelection, true);
+    document.addEventListener('focusin',         captureSelection, true);
 
     // ============================================
     // SUBSTITUIÇÃO DE TEXTO
@@ -807,37 +819,74 @@ Retorne APENAS o texto corrigido.`,
         return fab;
     }
 
+    function isEditableInput(el) {
+        if (!el) return false;
+        if (el.tagName === 'TEXTAREA') return true;
+        if (el.tagName === 'INPUT' && /^(text|search|url|email|password|tel|number)$/i.test(el.type || 'text')) return true;
+        if (el.isContentEditable || el.getAttribute('contenteditable') === 'true' || el.getAttribute('contenteditable') === '') return true;
+        return false;
+    }
+
     function positionFab() {
+        // 1. Seleção de texto ativa (mouse ou teclado) em qualquer elemento
         const sel = window.getSelection();
         if (sel && !sel.isCollapsed && sel.toString().trim()) {
             try {
-                const r = sel.getRangeAt(0).getBoundingClientRect();
-                if (r.width === 0 && r.height === 0) { if (fab) fab.style.display = 'none'; return; }
-                const f = ensureFab();
-                f.style.display = 'flex';
-                f.style.top  = `${window.scrollY + r.top - 52}px`;
-                f.style.left = `${window.scrollX + r.right - 22}px`;
-                return;
+                let r = sel.getRangeAt(0).getBoundingClientRect();
+                // Alguns sites retornam rect zerado — tenta pelo nó âncora
+                if ((r.width === 0 && r.height === 0) && sel.anchorNode) {
+                    const anchor = sel.anchorNode.nodeType === Node.TEXT_NODE
+                        ? sel.anchorNode.parentElement
+                        : sel.anchorNode;
+                    if (anchor) r = anchor.getBoundingClientRect();
+                }
+                if (r && r.width + r.height > 0) {
+                    const f = ensureFab();
+                    f.style.display = 'flex';
+                    f.style.top  = `${window.scrollY + r.bottom + 8}px`;
+                    f.style.left = `${window.scrollX + r.right - 22}px`;
+                    return;
+                }
             } catch (e) {}
         }
+        // 2. Textarea ou input nativo focado com conteúdo
         const ae = document.activeElement;
-        if (ae && !ae.closest('.vp-overlay') &&
-            (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /text|search|url|email/i.test(ae.type || 'text'))) &&
-            ae.selectionStart !== ae.selectionEnd) {
-            const rect = ae.getBoundingClientRect();
-            const f = ensureFab();
-            f.style.display = 'flex';
-            f.style.top  = `${window.scrollY + rect.top - 52}px`;
-            f.style.left = `${window.scrollX + rect.right - 44}px`;
-            return;
+        if (ae && !ae.closest('.vp-overlay') && isEditableInput(ae)) {
+            const hasText = (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT')
+                ? ae.value.trim()
+                : ae.innerText.trim();
+            if (hasText) {
+                const rect = ae.getBoundingClientRect();
+                const f = ensureFab();
+                f.style.display = 'flex';
+                f.style.top  = `${window.scrollY + rect.top - 52}px`;
+                f.style.left = `${window.scrollX + rect.right - 44}px`;
+                return;
+            }
         }
         if (fab) fab.style.display = 'none';
     }
 
-    document.addEventListener('mouseup',   () => setTimeout(positionFab, 10), true);
-    document.addEventListener('keyup',     () => setTimeout(positionFab, 10), true);
+    document.addEventListener('mouseup',  () => setTimeout(positionFab, 50), true);
+    document.addEventListener('keyup',    () => setTimeout(positionFab, 50), true);
+    document.addEventListener('focusin',  () => setTimeout(positionFab, 50), true);
+    document.addEventListener('focusout', () => setTimeout(() => {
+        if (!document.activeElement || !isEditableInput(document.activeElement)) {
+            if (fab) fab.style.display = 'none';
+        }
+    }, 200), true);
     document.addEventListener('scroll',    () => { if (fab) fab.style.display = 'none'; }, true);
-    document.addEventListener('mousedown', e => { if (fab && !fab.contains(e.target)) fab.style.display = 'none'; }, true);
+    document.addEventListener('mousedown', e => {
+        if (fab && !fab.contains(e.target) && !e.target.closest('.vp-overlay')) {
+            // Não esconde imediatamente — o mouseup vai reposicionar se houver seleção
+            setTimeout(() => {
+                const sel = window.getSelection();
+                if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+                    if (fab) fab.style.display = 'none';
+                }
+            }, 50);
+        }
+    }, true);
 
     // ============================================
     // ATALHO DE TECLADO: Ctrl+Shift+L
