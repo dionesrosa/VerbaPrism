@@ -1,9 +1,14 @@
 // ==UserScript==
 // @name         Verba Prism
 // @namespace    https://github.com/dionesrosa
-// @version      0.6.0
+// @version      0.6.1
 // @description  Aprimora texto com IA em qualquer site. Selecione um texto e melhore com um clique.
 // @author       Diones Souza
+// @icon         https://cdn-icons-png.magnific.com/64/8132/8132015.png
+// @homepageURL  https://github.com/dionesrosa/VerbaPrism
+// @supportURL   https://github.com/dionesrosa/VerbaPrism/issues
+// @updateURL    https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
+// @downloadURL  https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
 // @license      MIT
 // @match        *://*/*
 // @grant        GM_xmlhttpRequest
@@ -932,8 +937,8 @@ Retorne APENAS o texto corrigido.`,
     // MENU TAMPERMONKEY
     // ============================================
     try {
-        GM_registerMenuCommand('Verba Prism — Abrir editor',   () => openResult(lastSelection.text || '', ''));
-        GM_registerMenuCommand('Verba Prism — Configurações',  openSettings);
+        GM_registerMenuCommand('Abrir editor',   () => openResult(lastSelection.text || '', ''));
+        GM_registerMenuCommand('Configurações',  openSettings);
     } catch (e) {}
 
 })();
