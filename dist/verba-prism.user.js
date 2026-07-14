@@ -25,30 +25,6 @@
 (function() {
     'use strict';
 
-    // ==UserScript==
-    // @name         Verba Prism
-    // @namespace    https://github.com/dionesrosa
-    // @version      0.6.1
-    // @description  Aprimora texto com IA em qualquer site. Selecione um texto e melhore com um clique.
-    // @author       Diones Souza
-    // @icon         https://cdn-icons-png.magnific.com/64/8132/8132015.png
-    // @homepageURL  https://github.com/dionesrosa/VerbaPrism
-    // @supportURL   https://github.com/dionesrosa/VerbaPrism/issues
-    // @updateURL    https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
-    // @downloadURL  https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
-    // @license      MIT
-    // @match        *://*/*
-    // @grant        GM_xmlhttpRequest
-    // @grant        GM_getValue
-    // @grant        GM_setValue
-    // @grant        GM_registerMenuCommand
-    // @grant        GM_setClipboard
-    // @connect      api.groq.com
-    // @connect      api.openai.com
-    // @connect      generativelanguage.googleapis.com
-    // @run-at       document-idle
-    // ==/UserScript==
-    
     (function () {
         'use strict';
     

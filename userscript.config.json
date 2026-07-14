@@ -1,6 +1,6 @@
 {
   "name": "Verba Prism",
-  "entry": "script.js",
+  "entry": "src/index.js",
   "output": "dist/verba-prism.user.js",
   "namespace": "https://github.com/dionesrosa",
   "copyright": "",
