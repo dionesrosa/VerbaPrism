@@ -1,7 +1,4 @@
-(function () {
-    'use strict';
-
-    if (window.top !== window.self) return;
+if (window.top !== window.self) return;
 
     // ============================================
     // CONSTANTES
@@ -917,4 +914,3 @@ Retorne APENAS o texto corrigido.`,
         GM_registerMenuCommand('Configurações',  openSettings);
     } catch (e) {}
 
-})();

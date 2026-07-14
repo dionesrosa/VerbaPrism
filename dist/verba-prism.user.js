@@ -25,10 +25,7 @@
 (function() {
     'use strict';
 
-    (function () {
-        'use strict';
-    
-        if (window.top !== window.self) return;
+    if (window.top !== window.self) return;
     
         // ============================================
         // CONSTANTES
@@ -944,6 +941,5 @@
             GM_registerMenuCommand('Configurações',  openSettings);
         } catch (e) {}
     
-    })();
     
 })();

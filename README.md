@@ -33,15 +33,25 @@ Selecione um texto em qualquer página, clique no ícone flutuante e escolha o m
 
 ## 🛠️ Compilação com userscript-builder
 
-Para gerar o arquivo final localmente:
+Esta seção é destinada a desenvolvedores que quiserem gerar e publicar o userscript localmente.
+
+O [userscript-builder](https://github.com/dionesrosa/userscript-builder) lê os metadados do arquivo [userscript.config.json](userscript.config.json), usa a entrada principal em [src/index.js](src/index.js) e gera o arquivo final com o cabeçalho do Tampermonkey automaticamente.
+
+### Comandos mais usados
+
+- `usb build` — gera o arquivo final em `dist/`
+- `usb release patch|minor|major` — atualiza a versão e cria um release
+- `usb publish` — publica o build no GitHub Releases
 
 ```bash
 usb build
 ```
 
+> Para quem apenas vai usar o script, o fluxo mais simples é instalar o userscript diretamente pelo link de instalação acima.
+
 ## 🧩 Estrutura do projeto
 
-- [script.js](script.js): lógica principal do userscript
+- [src/index.js](src/index.js): lógica principal do userscript
 - [userscript.config.json](userscript.config.json): metadados e configuração do build
 
 ## 👤 Autor
