@@ -1,0 +1,33 @@
+{
+  "name": "Verba Prism",
+  "entry": "script.js",
+  "output": "dist/verba-prism.user.js",
+  "namespace": "https://github.com/dionesrosa",
+  "copyright": "",
+  "version": "0.6.1",
+  "description": "Aprimora texto com IA em qualquer site. Selecione um texto e melhore com um clique.",
+  "author": "Diones Souza",
+  "license": "MIT",
+  "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAIAAeIhvAAAAAElFTkSuQmCC",
+  "homepageURL": "https://github.com/dionesrosa/VerbaPrism",
+  "supportURL": "https://github.com/dionesrosa/VerbaPrism/issues",
+  "updateURL": "https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js",
+  "downloadURL": "https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js",
+  "match": [
+    "*://*/*"
+  ],
+  "grant": [
+    "GM_xmlhttpRequest",
+    "GM_getValue",
+    "GM_setValue",
+    "GM_registerMenuCommand",
+    "GM_setClipboard"
+  ],
+  "connect": [
+    "api.groq.com",
+    "api.openai.com",
+    "generativelanguage.googleapis.com"
+  ],
+  "run_at": "document-idle",
+  "noframes": false
+}
