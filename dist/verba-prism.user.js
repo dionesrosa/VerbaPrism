@@ -8,8 +8,8 @@
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAIAAeIhvAAAAAElFTkSuQmCC
 // @homepageURL  https://github.com/dionesrosa/VerbaPrism
 // @supportURL   https://github.com/dionesrosa/VerbaPrism/issues
-// @updateURL    https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
-// @downloadURL  https://raw.githubusercontent.com/dionesrosa/VerbaPrism/master/script.js
+// @updateURL    https://raw.githubusercontent.com/dionesrosa/VerbaPrism/main/dist/verba-prism.user.js
+// @downloadURL  https://raw.githubusercontent.com/dionesrosa/VerbaPrism/main/dist/verba-prism.user.js
 // @match        *://*/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
