@@ -182,33 +182,35 @@ function injectStyles() {
     /* ── Toolbar Pill ── */
     .vp-toolbar-wrapper {
         position: fixed;
-        bottom: 14px;
+        bottom: 10px;
         right: 0;
         z-index: ${MODAL_Z - 1};
         user-select: none;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
     }
     .vp-pill {
-        background: rgba(0,0,0,0.55);
-        backdrop-filter: blur(14px) saturate(1.4) brightness(1.1);
-        -webkit-backdrop-filter: blur(14px) saturate(1.4) brightness(1.1);
+        background: rgba(0, 0, 0, 0.50);
+        backdrop-filter: blur(12px) saturate(1.4) brightness(1.1);
+        -webkit-backdrop-filter: blur(12px) saturate(1.4) brightness(1.1);
         border-radius: 20px 0 0 20px;
         box-shadow:
-            0 4px 4px -2px rgba(0,0,0,0.06),
-            0 0 0 0.5px rgba(0,0,0,0.75),
-            inset 0 0.5px 0 rgba(255,255,255,0.13),
-            inset 0 -0.5px 0 rgba(255,255,255,0.05),
-            inset 0 0 0 0.5px rgba(255,255,255,0.17);
-        height: 42px;
-        width: 42px;
+            0 4px 4px -2px rgba(0, 0, 0, 0.04),
+            0 2px 2px -1px rgba(0, 0, 0, 0.04),
+            0 0 0 0.5px rgba(0, 0, 0, 0.72),
+            inset 0 0.5px 0 rgba(255, 255, 255, 0.12),
+            inset 0 -0.5px 0 rgba(255, 255, 255, 0.04),
+            inset 0 0 0 0.5px rgba(255, 255, 255, 0.16);
+        height: 40px;
+        width: 40px;
         overflow: hidden;
-        color: #fff;
+        color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: flex-end;
         position: relative;
-        transition: width 280ms cubic-bezier(.4,0,.2,1),
-                    border-radius 280ms cubic-bezier(.4,0,.2,1);
+        transition: width 280ms cubic-bezier(.4, 0, .2, 1),
+                    border-radius 280ms cubic-bezier(.4, 0, .2, 1);
         cursor: pointer;
     }
     .vp-pill::before {
@@ -217,7 +219,7 @@ function injectStyles() {
         position: absolute;
         inset: 0;
         border-radius: inherit;
-        background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
     }
     .vp-pill.is-open {
         width: max-content;
@@ -225,9 +227,13 @@ function injectStyles() {
     }
     .vp-pill-icon-closed {
         position: absolute;
-        right: 0; top: 0;
-        width: 42px; height: 42px;
-        display: flex; align-items: center; justify-content: center;
+        right: 0;
+        top: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         pointer-events: none;
         transition: opacity 150ms;
         color: var(--vp-pink);
@@ -236,7 +242,7 @@ function injectStyles() {
     .vp-pill-content {
         display: flex;
         align-items: center;
-        padding: 5px;
+        padding: 4px;
         gap: 2px;
         opacity: 0;
         pointer-events: none;
@@ -250,38 +256,45 @@ function injectStyles() {
     }
     .vp-tbtn {
         flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center;
-        width: 32px; height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        border: none; background: transparent;
-        cursor: pointer; color: #fff;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: #ffffff;
         outline: none;
-        transition: background 150ms, transform 100ms, color 150ms;
+        transition: background 150ms, transform 100ms;
         position: relative;
     }
-    .vp-tbtn:hover { background: rgba(255,255,255,0.12); }
-    .vp-tbtn.is-active { background: rgba(255,45,135,0.35); color: var(--vp-pink); }
-    .vp-tbtn:active { transform: scale(0.93); }
-    .vp-tbtn:focus-visible { box-shadow: 0 0 0 2px var(--vp-pink) inset; }
-    .vp-tbtn svg { width: 19px; height: 19px; pointer-events: none; flex-shrink: 0; }
+    .vp-tbtn:hover { background: rgba(255, 255, 255, 0.10); }
+    .vp-tbtn.is-active { background: rgba(255, 255, 255, 0.20); }
+    .vp-tbtn:active { transform: scale(0.95); }
+    .vp-tbtn:focus-visible { box-shadow: 0 0 0 2px #5E89F2 inset; }
+    .vp-tbtn svg { width: 20px; height: 20px; pointer-events: none; flex-shrink: 0; }
     .vp-tbtn-primary { color: var(--vp-pink); }
-    .vp-tbtn-primary:hover { background: rgba(255,45,135,0.2); }
+    .vp-tbtn-primary:hover { background: rgba(255, 255, 255, 0.10); }
     .vp-pill-sep {
-        width: 1px; height: 22px;
-        background: rgba(255,255,255,0.16);
-        flex-shrink: 0; margin: 0 2px;
+        width: 1px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.15);
+        flex-shrink: 0;
+        margin: 0 2px;
     }
     /* Dropdown da toolbar */
     .vp-tbmenu {
         position: fixed;
         flex-direction: column;
-        background: rgba(16,12,22,0.97);
+        background: rgba(18, 18, 18, 0.97);
         backdrop-filter: blur(16px);
-        border: 0.5px solid rgba(255,255,255,0.15);
+        border: 0.5px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
         padding: 4px;
-        min-width: 190px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+        min-width: 180px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         z-index: ${MODAL_Z};
         display: none;
     }
@@ -289,38 +302,51 @@ function injectStyles() {
     .vp-tbmenu::after {
         content: '';
         position: absolute;
-        bottom: -6px; right: 14px;
-        width: 12px; height: 12px;
-        background: rgba(16,12,22,0.97);
-        border-right: 0.5px solid rgba(255,255,255,0.15);
-        border-bottom: 0.5px solid rgba(255,255,255,0.15);
+        bottom: -6px;
+        right: 12px;
+        width: 12px;
+        height: 12px;
+        background: rgba(18, 18, 18, 0.97);
+        border-right: 0.5px solid rgba(255, 255, 255, 0.15);
+        border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
         transform: rotate(45deg);
+        backdrop-filter: blur(16px);
         z-index: -1;
     }
     .vp-tbmenu-item {
-        background: none; border: none;
-        color: rgba(255,255,255,0.88);
-        font-size: 13px; padding: 8px 12px;
-        border-radius: 8px; cursor: pointer;
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 13px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
         text-align: left;
         transition: background 120ms;
         font-family: inherit;
-        display: flex; align-items: center; gap: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         width: 100%;
     }
-    .vp-tbmenu-item:hover { background: rgba(255,255,255,0.10); color: #fff; }
+    .vp-tbmenu-item:hover { background: rgba(255, 255, 255, 0.10); color: #ffffff; }
     .vp-tbmenu-sep {
         height: 1px;
-        background: rgba(255,255,255,0.10);
+        background: rgba(255, 255, 255, 0.10);
         margin: 3px 8px;
     }
     /* Badge de modo */
     .vp-mode-badge {
-        font-size: 10px; font-weight: 700;
-        color: var(--vp-pink); letter-spacing: .3px;
-        line-height: 1; padding: 0 2px;
-        max-width: 52px; overflow: hidden;
-        text-overflow: ellipsis; white-space: nowrap;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--vp-pink);
+        letter-spacing: .3px;
+        line-height: 1;
+        padding: 0 2px;
+        max-width: 52px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     /* Overlay */
@@ -1011,9 +1037,13 @@ function buildToolbar() {
     menu.id = 'vp-tbmenu';
     menu.className = 'vp-tbmenu';
     const menuItems = [
-        { icon: '✨', label: 'Aprimorar seleção', action: () => { tbCloseMenu(); freezeAndOpenEditor(); } },
-        { icon: '⚙', label: 'Configurações',      action: () => { tbCloseMenu(); openSettings(); } },
+        { icon: '✨', label: 'Aprimorar seleção', action: () => {
+            tbCloseMenu();
+            const text = frozenSelection.text || window.getSelection()?.toString() || '';
+            openResult(text, '');
+        } },
         { sep: true },
+        { icon: '⚙', label: 'Configurações',      action: () => { tbCloseMenu(); openSettings(); } },
         { icon: '↺', label: 'Resetar fixação',    action: () => { tbCloseMenu(); tbTogglePin(false); } },
         { icon: '✕', label: 'Fechar barra',        action: () => { tbCloseMenu(); tbTogglePin(false); tbState.pill.classList.remove('is-open'); } },
     ];
@@ -1079,13 +1109,6 @@ function buildToolbar() {
     const sep1 = document.createElement('div');
     sep1.className = 'vp-pill-sep';
 
-    // Botão configurações
-    const btnSettings = document.createElement('button');
-    btnSettings.className = 'vp-tbtn';
-    btnSettings.title = 'Configurações';
-    btnSettings.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 8.5A3.5 3.5 0 1 0 12 15.5A3.5 3.5 0 0 0 12 8.5ZM10 12A2 2 0 1 1 14 12A2 2 0 0 1 10 12ZM13.447 3.106a1.5 1.5 0 0 0-2.894 0l-.25.965a.75.75 0 0 1-.981.51l-.924-.374a1.5 1.5 0 0 0-1.895 1.895l.374.924a.75.75 0 0 1-.51.981l-.965.25a1.5 1.5 0 0 0 0 2.894l.965.25a.75.75 0 0 1 .51.981l-.374.924a1.5 1.5 0 0 0 1.895 1.895l.924-.374a.75.75 0 0 1 .981.51l.25.965a1.5 1.5 0 0 0 2.894 0l.25-.965a.75.75 0 0 1 .981-.51l.924.374a1.5 1.5 0 0 0 1.895-1.895l-.374-.924a.75.75 0 0 1 .51-.981l.965-.25a1.5 1.5 0 0 0 0-2.894l-.965-.25a.75.75 0 0 1-.51-.981l.374-.924a1.5 1.5 0 0 0-1.895-1.895l-.924.374a.75.75 0 0 1-.981-.51l-.25-.965Z"/></svg>`;
-    btnSettings.addEventListener('click', e => { e.stopPropagation(); openSettings(); });
-
     // Botão opções (três pontos)
     const btnOpts = document.createElement('button');
     btnOpts.className = 'vp-tbtn';
@@ -1093,11 +1116,11 @@ function buildToolbar() {
     btnOpts.title = 'Mais opções';
     btnOpts.setAttribute('aria-haspopup', 'true');
     btnOpts.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.75 12C6.75 12.9665 5.9665 13.75 5 13.75C4.0335 13.75 3.25 12.9665 3.25 12C3.25 11.0335 4.0335 10.25 5 10.25C5.9665 10.25 6.75 11.0335 6.75 12ZM13.75 12C13.75 12.9665 12.9665 13.75 12 13.75C11.0335 13.75 10.25 12.9665 10.25 12C10.25 11.0335 11.0335 10.25 12 10.25C12.9665 10.25 13.75 11.0335 13.75 12ZM20.75 12C20.75 12.9665 19.9665 13.75 19 13.75C18.0335 13.75 17.25 12.9665 17.25 12C17.25 11.0335 18.0335 10.25 19 10.25C19.9665 10.25 20.75 11.0335 20.75 12Z"/></svg>`;
+    btnOpts.addEventListener('mousedown', e => {
+        // Congela a seleção antes do clique tirar o foco
+        frozenSelection = { text: lastSelection.text, range: lastSelection.range, element: lastSelection.element };
+    });
     btnOpts.addEventListener('click', e => { e.stopPropagation(); tbToggleMenu(); });
-
-    // Separador
-    const sep2 = document.createElement('div');
-    sep2.className = 'vp-pill-sep';
 
     // Botão fixar/fechar
     const btnPin = document.createElement('button');
@@ -1110,7 +1133,7 @@ function buildToolbar() {
         <svg id="vp-icon-close" viewBox="0 0 24 24" fill="currentColor" style="display:none;" aria-hidden="true"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/></svg>`;
     btnPin.addEventListener('click', e => { e.stopPropagation(); tbTogglePin(); });
 
-    content.append(btnMain, modeBadge, sep1, btnSettings, btnOpts, sep2, btnPin);
+    content.append(btnMain, modeBadge, sep1, btnOpts, btnPin);
     pill.append(iconClosed, content);
 
     // Hover para abrir/fechar

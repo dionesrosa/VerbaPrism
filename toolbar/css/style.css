@@ -1,0 +1,219 @@
+/* Reset e Variáveis */
+:root {
+  --bg-primary: #1c1c1c;
+  --bg-pill: rgba(0, 0, 0, 0.50);
+  --bg-menu: rgba(18, 18, 18, 0.97);
+  --accent-color: #5E89F2;
+  --text-main: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.88);
+  --border-light: rgba(255, 255, 255, 0.15);
+  --transition-speed: 280ms;
+  --pill-height: 40px;
+  --pill-width-closed: 40px;
+  --btn-size: 32px;
+}
+
+body {
+  background: var(--bg-primary);
+  min-height: 100vh;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Container Principal */
+.toolbar-wrapper {
+  position: fixed;
+  bottom: 10px;
+  right: 0;
+  z-index: 9999;
+  user-select: none;
+}
+
+/* Pill (Botão Expansível) */
+.toolbar-pill {
+  background: var(--bg-pill);
+  backdrop-filter: blur(12px) saturate(1.4) brightness(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4) brightness(1.1);
+  border-radius: 20px 0 0 20px;
+  box-shadow:
+    0 4px 4px -2px rgba(0, 0, 0, 0.04),
+    0 2px 2px -1px rgba(0, 0, 0, 0.04),
+    0 0 0 0.5px rgba(0, 0, 0, 0.72),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -0.5px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.16);
+  height: var(--pill-height);
+  width: var(--pill-width-closed);
+  overflow: hidden;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  transition: width var(--transition-speed) cubic-bezier(.4, 0, .2, 1),
+              border-radius var(--transition-speed) cubic-bezier(.4, 0, .2, 1);
+  cursor: pointer;
+}
+
+.toolbar-pill::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.toolbar-pill.is-open {
+  width: max-content;
+  cursor: default;
+}
+
+/* Ícone de Diamante (Toolbar Fechada) */
+.toolbar-icon-closed {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: var(--pill-width-closed);
+  height: var(--pill-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: opacity 150ms;
+}
+
+.toolbar-pill.is-open .toolbar-icon-closed {
+  opacity: 0;
+}
+
+/* Conteúdo Expandido */
+.toolbar-content {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease 80ms;
+  white-space: nowrap;
+  min-width: max-content;
+}
+
+.toolbar-pill.is-open .toolbar-content {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Botões */
+.tool-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--btn-size);
+  height: var(--btn-size);
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-main);
+  outline: none;
+  transition: background 150ms, transform 100ms;
+  position: relative;
+}
+
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.tool-btn.is-active {
+  background: rgba(255, 255, 255, 0.20);
+}
+
+.tool-btn:active {
+  transform: scale(0.95);
+}
+
+.tool-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent-color) inset;
+}
+
+.tool-btn svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Separador */
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border-light);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* Menus Dropdown (Contextuais) */
+.dropdown-menu {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  background: var(--bg-menu);
+  backdrop-filter: blur(16px);
+  border: 0.5px solid var(--border-light);
+  border-radius: 12px;
+  padding: 4px;
+  min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+}
+
+.dropdown-menu.is-open {
+  display: flex;
+}
+
+/* Seta do Menu */
+.dropdown-menu::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  right: 12px;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-menu);
+  border-right: 0.5px solid var(--border-light);
+  border-bottom: 0.5px solid var(--border-light);
+  transform: rotate(45deg);
+  backdrop-filter: blur(16px);
+  z-index: -1;
+}
+
+.dropdown-item {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text-main);
+}
+
+.dropdown-separator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.10);
+  margin: 3px 8px;
+}
