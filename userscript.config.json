@@ -4,7 +4,7 @@
   "output": "dist/verba-prism.user.js",
   "namespace": "https://github.com/dionesrosa",
   "copyright": "",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "Aprimora texto com IA em qualquer site. Selecione um texto e melhore com um clique.",
   "author": "Diones Souza",
   "license": "MIT",
