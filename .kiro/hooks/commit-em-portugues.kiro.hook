@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Commit em Português",
+  "description": "Ao parar o agente, lembra de fazer o commit das alterações com mensagem em português descrevendo o que foi feito.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Se houver alterações não commitadas no repositório, faça um commit git com uma mensagem em português descrevendo claramente o que foi feito nesta sessão. Use `git add` apenas nos arquivos relevantes alterados, nunca `git add .` sem verificar antes. A mensagem deve ser objetiva e no imperativo, ex: \"Substitui FAB pela toolbar pill\", \"Corrige CSS da toolbar\", etc."
+  }
+}
