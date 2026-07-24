@@ -236,7 +236,7 @@ function injectStyles() {
         justify-content: center;
         pointer-events: none;
         transition: opacity 150ms;
-        color: var(--vp-pink);
+        color: #ffffff;
     }
     .vp-pill.is-open .vp-pill-icon-closed { opacity: 0; }
     .vp-pill-content {
@@ -265,7 +265,7 @@ function injectStyles() {
         border: none;
         background: transparent;
         cursor: pointer;
-        color: #ffffff;
+        color: #ffffff !important;
         outline: none;
         transition: background 150ms, transform 100ms;
         position: relative;
@@ -275,8 +275,8 @@ function injectStyles() {
     .vp-tbtn:active { transform: scale(0.95); }
     .vp-tbtn:focus-visible { box-shadow: 0 0 0 2px #5E89F2 inset; }
     .vp-tbtn svg { width: 20px; height: 20px; pointer-events: none; flex-shrink: 0; }
-    .vp-tbtn-primary { color: var(--vp-pink); }
-    .vp-tbtn-primary:hover { background: rgba(255, 255, 255, 0.10); color: var(--vp-pink); }
+    .vp-tbtn-primary { color: var(--vp-pink) !important; }
+    .vp-tbtn-primary:hover { background: rgba(255, 255, 255, 0.10); color: var(--vp-pink) !important; }
     .vp-pill-sep {
         width: 1px;
         height: 24px;
