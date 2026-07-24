@@ -276,7 +276,7 @@ function injectStyles() {
     .vp-tbtn:focus-visible { box-shadow: 0 0 0 2px #5E89F2 inset; }
     .vp-tbtn svg { width: 20px; height: 20px; pointer-events: none; flex-shrink: 0; }
     .vp-tbtn-primary { color: var(--vp-pink); }
-    .vp-tbtn-primary:hover { background: rgba(255, 255, 255, 0.10); }
+    .vp-tbtn-primary:hover { background: rgba(255, 255, 255, 0.10); color: var(--vp-pink); }
     .vp-pill-sep {
         width: 1px;
         height: 24px;
@@ -339,15 +339,24 @@ function injectStyles() {
     .vp-mode-badge {
         font-size: 10px;
         font-weight: 700;
-        color: var(--vp-pink);
+        color: #ffffff;
         letter-spacing: .3px;
         line-height: 1;
-        padding: 0 2px;
+        padding: 0 4px 0 0;
         max-width: 52px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        cursor: pointer;
     }
+    /* Grupo botão principal + badge (ficam juntos sem gap) */
+    .vp-main-group {
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+    /* Separador entre ... e X */
+    #vp-tbtn-pin { margin-left: 4px; }
 
     /* Overlay */
     .vp-overlay {
@@ -1101,7 +1110,6 @@ function buildToolbar() {
     modeBadge.className = 'vp-mode-badge';
     modeBadge.title = 'Modo ativo — clique para configurar';
     modeBadge.textContent = promptMode;
-    modeBadge.style.cursor = 'pointer';
     modeBadge.addEventListener('click', e => { e.stopPropagation(); openSettings(); });
     tbState.modeBadge = modeBadge;
 
@@ -1133,7 +1141,11 @@ function buildToolbar() {
         <svg id="vp-icon-close" viewBox="0 0 24 24" fill="currentColor" style="display:none;" aria-hidden="true"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/></svg>`;
     btnPin.addEventListener('click', e => { e.stopPropagation(); tbTogglePin(); });
 
-    content.append(btnMain, modeBadge, sep1, btnOpts, btnPin);
+    const mainGroup = document.createElement('div');
+    mainGroup.className = 'vp-main-group';
+    mainGroup.append(btnMain, modeBadge);
+
+    content.append(mainGroup, sep1, btnOpts, btnPin);
     pill.append(iconClosed, content);
 
     // Hover para abrir/fechar
